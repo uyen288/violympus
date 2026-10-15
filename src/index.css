@@ -2,7 +2,7 @@
 
 @layer base {
   :root {
-    --background: #f8fafc;
+    --background: #ffffff;
     --surface: #ffffff;
     --surface-muted: #f1f5f9;
     --border: #e2e8f0;
@@ -10,9 +10,9 @@
     --foreground: #0f172a;
     --foreground-muted: #475569;
     
-    --primary: #1d3f8f;
-    --primary-hover: #16336f;
-    --primary-soft: #e8eefb;
+    --primary: #168fae;
+    --primary-hover: #11758f;
+    --primary-soft: #e5faf7;
     --primary-foreground: #ffffff;
     
     --accent-gold: #c99a2e;
@@ -30,7 +30,10 @@
     --warning-soft: #fdf1e0;
     --warning-foreground: #ffffff;
     
-    --focus-ring: #1d3f8f;
+    --focus-ring: #168fae;
+    --sky: #42aee3;
+    --turquoise: #20c6b8;
+    --turquoise-deep: #07998f;
 
     /* Arena dark treatment tokens */
     --arena-background: #0b1220;
