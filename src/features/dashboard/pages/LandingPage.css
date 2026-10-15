@@ -15,70 +15,42 @@
 @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; }.hero-copy { padding-left: 0; text-align: center; }.hero-lede { margin-inline: auto; }.hero-actions, .hero-proof { justify-content: center; }.hero-visual { min-height: 450px; }.subject-grid { grid-template-columns: repeat(2, 1fr); }.arena-cta { padding-inline: 46px; } }
 @media (max-width: 640px) { .landing-container { width: calc(100% - 32px); }.landing-hero { min-height: 0; padding-top: 57px; padding-bottom: 30px; }.hero-copy h1 { font-size: 55px; }.hero-lede { font-size: 14px; }.hero-visual { min-height: 390px; transform: scale(.88); margin: -13px -25px -5px; }.orbit-b { width: 410px; }.xp-card { right: 15px; }.top-card { left: 0; }.question-float { right: -3px; bottom: 30px; }.rank-card-large { width: 260px; padding: 23px; }.rank-card-large > strong { font-size: 60px; }.landing-section { padding-top: 95px; }.section-heading { display: block; }.section-heading h2 { font-size: 31px; }.section-link { margin-top: 21px; }.subject-grid { gap: 9px; }.subject-card { display: block; padding: 14px 13px; }.subject-card > span:nth-child(2) { display: block; margin-top: 12px; }.subject-arrow { display: none; }.subject-icon { width: 39px; height: 39px; }.process-section { padding-top: 95px; padding-bottom: 90px; }.process-heading p { margin-top: 18px; }.process-grid { grid-template-columns: 1fr; }.process-grid article, .process-grid article + article { grid-template-columns: 40px 52px 1fr; grid-template-rows: auto auto; padding: 21px 0; border-left: 0; }.process-grid article + article { border-top: 1px solid var(--border); }.process-grid article > span { grid-row: 1 / span 2; padding-top: 5px; }.process-grid article > i { grid-column: 2; grid-row: 1 / span 2; margin: 0; width: 44px; height: 44px; }.process-grid article h3 { grid-column: 3; margin: 0; }.process-grid article p { grid-column: 3; }.arena-cta { display: block; min-height: 410px; padding: 38px 27px; }.arena-cta h2 { font-size: 39px; }.arena-visual { width: 100%; height: 180px; }.landing-trust { justify-content: flex-start; gap: 16px 25px; padding-top: 27px; } }
 
-/* Dynamic shooting stars (sao băng) with glowing meteor head & cosmic gradient tail */
-@keyframes landing-shooting-star {
-  0% {
-    opacity: 0;
-    transform: rotate(-35deg) translateX(80px);
-  }
-  12% {
-    opacity: 1;
-  }
-  65% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: rotate(-35deg) translateX(-360px);
-  }
+/* Sparse diagonal meteors with a small rounded head and soft trail. */
+@keyframes landing-meteor-refined {
+  0%, 68%, 100% { opacity: 0; transform: translate3d(0, 0, 0) rotate(-45deg); }
+  72% { opacity: .72; }
+  84% { opacity: 0; transform: translate3d(-155px, 155px, 0) rotate(-45deg); }
 }
 
 .landing-stars span {
-  position: absolute;
-  display: block;
-  width: 140px;
-  height: 1px;
-  border-radius: 9999px;
-  /* Bright at head (left), fades to nothing at tail (right) */
-  background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.0) 0%,
-    rgba(180, 230, 255, 0.25) 40%,
-    rgba(120, 210, 255, 0.55) 72%,
-    rgba(200, 245, 255, 0.85) 90%,
-    rgba(255, 255, 255, 0.95) 100%
-  );
+  width: 3px;
+  height: 3px;
   opacity: 0;
-  pointer-events: none;
+  border-radius: 50%;
+  background: #d7fff9;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .55), 0 0 7px 2px rgba(32, 198, 184, .55);
 }
 
-/* Meteor head — bright glowing orb */
 .landing-stars span::before {
   content: '';
   position: absolute;
-  right: -3px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow:
-    0 0 3px 1px rgba(255, 255, 255, 0.95),
-    0 0 8px 3px rgba(160, 230, 255, 0.85),
-    0 0 18px 6px rgba(32, 198, 184, 0.45);
+  top: 1px;
+  right: 1px;
+  width: 78px;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(55, 202, 202, .58));
 }
 
 .landing-stars span::after { content: none; }
-
-.landing-stars span:nth-child(1) { top: 12%; right: 18%; animation: landing-shooting-star 3.0s 0.2s linear infinite; }
-.landing-stars span:nth-child(2) { top: 22%; right: 38%; animation: landing-shooting-star 3.2s 1.4s linear infinite; }
-.landing-stars span:nth-child(3) { top: 8%;  left: 35%; animation: landing-shooting-star 3.1s 2.6s linear infinite; }
-.landing-stars span:nth-child(4) { top: 38%; right: 12%; animation: landing-shooting-star 3.3s 0.8s linear infinite; }
-.landing-stars span:nth-child(5) { top: 52%; right: 42%; animation: landing-shooting-star 2.9s 3.4s linear infinite; }
-.landing-stars span:nth-child(6) { top: 18%; left: 16%; animation: landing-shooting-star 3.4s 2.0s linear infinite; }
-.landing-stars span:nth-child(7) { top: 66%; right: 22%; animation: landing-shooting-star 3.2s 4.0s linear infinite; }
-.landing-stars span:nth-child(8) { top: 46%; left: 26%; animation: landing-shooting-star 3.5s 1.0s linear infinite; }
-.landing-stars span:nth-child(9) { top: 76%; right: 48%; animation: landing-shooting-star 3.1s 2.8s linear infinite; }
-.landing-stars span:nth-child(10) { top: 28%; right: 62%; animation: landing-shooting-star 3.0s 4.6s linear infinite; }
-
+.landing-stars span:nth-child(-n + 8) { animation: landing-meteor-refined 13s linear infinite; }
+.landing-stars span:nth-child(1) { top: 12%; left: 16%; animation-delay: 1s; }
+.landing-stars span:nth-child(2) { top: 24%; right: 12%; animation-delay: 5s; }
+.landing-stars span:nth-child(3) { top: 39%; left: 7%; animation-delay: 9s; }
+.landing-stars span:nth-child(4) { top: 48%; right: 29%; animation-delay: 3s; }
+.landing-stars span:nth-child(5) { top: 63%; left: 23%; animation-delay: 7s; }
+.landing-stars span:nth-child(6) { top: 72%; right: 8%; animation-delay: 11s; }
+.landing-stars span:nth-child(7) { top: 82%; left: 54%; animation-delay: 4s; }
+.landing-stars span:nth-child(8) { top: 91%; right: 42%; animation-delay: 10s; }
+.landing-stars span:nth-child(9), .landing-stars span:nth-child(10) { width: 2px; height: 2px; opacity: .2; animation: none; background: var(--turquoise); box-shadow: 0 0 6px 1px rgba(32, 198, 184, .35); }
 @media (prefers-reduced-motion: reduce) { .landing-page *, .landing-page *::before, .landing-page *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
