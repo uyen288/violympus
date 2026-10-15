@@ -34,7 +34,7 @@ const subjects: Subject[] = [
   { title: 'Ngoại ngữ', meta: '09 chủ đề', icon: Globe2, tone: 'subject-gold' },
 ];
 
-const stars = Array.from({ length: 15 }, (_, index) => index);
+const stars = Array.from({ length: 20 }, (_, index) => index);
 
 export function LandingPage() {
   const { t } = useTranslation();
