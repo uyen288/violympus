@@ -891,3 +891,21 @@ export interface Database {
     };
   };
 }
+
+/** Convenience helper to extract table Row types */
+export type Tables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Row'];
+
+/** Typed RPC caller that accepts any function name (for admin RPCs not in generated types) */
+export type AdminRpcName =
+  | 'admin_upsert_subject'
+  | 'admin_delete_subject'
+  | 'admin_upsert_topic'
+  | 'admin_get_question'
+  | 'admin_upsert_question'
+  | 'admin_delete_question'
+  | 'admin_list_users'
+  | 'admin_set_user_role'
+  | 'import_questions_batch'
+  | 'create_import_job'
+  | 'log_audit';

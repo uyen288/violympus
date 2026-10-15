@@ -27,7 +27,15 @@ import { ProfilePage } from '@/features/profile/pages/ProfilePage';
 import { SettingsPage } from '@/features/settings/pages/SettingsPage';
 
 // Admin Pages (RequireRole: editor / admin)
-import { AdminOverviewPage } from '@/features/admin/pages/AdminOverviewPage';
+import {
+  AdminOverviewPage,
+  AdminSubjectsPage,
+  AdminQuestionsPage,
+  AdminQuestionFormPage,
+  AdminImportPage,
+  AdminUsersPage,
+  AdminAuditPage,
+} from '@/features/admin';
 
 // System Pages
 import { NotFoundPage } from '@/features/dashboard/pages/NotFoundPage';
@@ -136,15 +144,16 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <AdminOverviewPage /> },
-      { path: 'subjects', element: <AdminOverviewPage /> },
-      { path: 'questions', element: <AdminOverviewPage /> },
-      { path: 'exams', element: <AdminOverviewPage /> },
-      { path: 'import', element: <AdminOverviewPage /> },
+      { path: 'subjects', element: <AdminSubjectsPage /> },
+      { path: 'questions', element: <AdminQuestionsPage /> },
+      { path: 'questions/new', element: <AdminQuestionFormPage /> },
+      { path: 'questions/:questionId', element: <AdminQuestionFormPage /> },
+      { path: 'import', element: <AdminImportPage /> },
       {
         path: 'users',
         element: (
           <RequireRole role="admin">
-            <AdminOverviewPage />
+            <AdminUsersPage />
           </RequireRole>
         ),
       },
@@ -152,7 +161,7 @@ export const router = createBrowserRouter([
         path: 'audit',
         element: (
           <RequireRole role="admin">
-            <AdminOverviewPage />
+            <AdminAuditPage />
           </RequireRole>
         ),
       },

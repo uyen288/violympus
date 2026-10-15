@@ -1,110 +1,176 @@
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import {
-  Layers,
+  Activity,
+  AlertCircle,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  FileQuestion,
   HelpCircle,
-  FileCheck2,
-  FileSpreadsheet,
-  ShieldCheck,
+  Upload,
+  Users,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase/client';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/app/providers';
+import { listAuditLogs } from '@/features/admin/services/adminAuditService';
+
+interface StatsData {
+  totalQuestions: number;
+  publishedQuestions: number;
+  draftQuestions: number;
+  totalSubjects: number;
+  totalTopics: number;
+  totalUsers: number;
+}
+
+async function fetchAdminStats(): Promise<StatsData> {
+  const [questionsRes, subjectsRes, topicsRes, usersRes] = await Promise.all([
+    supabase.from('questions').select('status', { count: 'exact', head: false }),
+    supabase.from('subjects').select('id', { count: 'exact', head: true }),
+    supabase.from('topics').select('id', { count: 'exact', head: true }),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }),
+  ]);
+
+  const questions = questionsRes.data ?? [];
+  const published = questions.filter((q) => q.status === 'published').length;
+  const draft = questions.filter((q) => q.status === 'draft').length;
+
+  return {
+    totalQuestions: questionsRes.count ?? 0,
+    publishedQuestions: published,
+    draftQuestions: draft,
+    totalSubjects: subjectsRes.count ?? 0,
+    totalTopics: topicsRes.count ?? 0,
+    totalUsers: usersRes.count ?? 0,
+  };
+}
+
+const ACTION_LABEL: Record<string, string> = {
+  create_subject: 'Tạo môn học',
+  update_subject: 'Cập nhật môn học',
+  archive_subject: 'Lưu trữ môn học',
+  delete_subject: 'Xóa môn học',
+  create_question: 'Tạo câu hỏi',
+  update_question: 'Cập nhật câu hỏi',
+  delete_question: 'Xóa câu hỏi',
+  import_questions: 'Import câu hỏi',
+  change_user_role: 'Đổi vai trò',
+};
 
 export function AdminOverviewPage() {
-  const { user } = useAuth();
+  const statsQuery = useQuery({ queryKey: ['admin', 'stats'], queryFn: fetchAdminStats });
+  const auditQuery = useQuery({
+    queryKey: ['admin', 'audit', 'recent'],
+    queryFn: () => listAuditLogs({ limit: 8 }),
+  });
 
-  const adminStats = [
-    { label: 'Tổng lĩnh vực', count: '6', icon: Layers, href: '/admin/subjects' },
-    { label: 'Ngân hàng câu hỏi', count: '120+', icon: HelpCircle, href: '/admin/questions' },
-    { label: 'Đề thi đã xuất bản', count: '14', icon: FileCheck2, href: '/admin/exams' },
-    { label: 'Nhập liệu hàng loạt', count: 'CSV/XLSX', icon: FileSpreadsheet, href: '/admin/import' },
-  ];
+  if (statsQuery.isPending) return <LoadingSpinner text="Đang tải thống kê..." />;
+  if (statsQuery.isError) return <ErrorState message="Không thể tải thống kê admin." />;
+
+  const stats = statsQuery.data;
 
   return (
-    <div className="space-y-8 max-w-7xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">
-              Trung tâm kiểm soát
-            </span>
-            <Badge variant="gold" className="text-[10px]">
-              {user?.role}
-            </Badge>
-          </div>
-          <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            Admin Studio — Tổng quan hệ thống
-          </h1>
-          <p className="text-xs sm:text-sm text-foreground-muted mt-1">
-            Quản trị nội dung giáo dục, câu hỏi, đề thi và giám sát hoạt động người dùng.
-          </p>
-        </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Tổng quan</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Trạng thái nội dung và hoạt động gần đây của Violympus Admin Studio.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {adminStats.map((stat, i) => (
-          <Card key={i} className="p-4 flex items-center justify-between">
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {[
+          { label: 'Câu hỏi', value: stats.totalQuestions, icon: HelpCircle, color: 'text-blue-600 bg-blue-50' },
+          { label: 'Đã đăng', value: stats.publishedQuestions, icon: CheckCircle2, color: 'text-green-600 bg-green-50' },
+          { label: 'Nháp', value: stats.draftQuestions, icon: FileQuestion, color: 'text-amber-600 bg-amber-50' },
+          { label: 'Môn học', value: stats.totalSubjects, icon: BookOpen, color: 'text-purple-600 bg-purple-50' },
+          { label: 'Chủ đề', value: stats.totalTopics, icon: Activity, color: 'text-teal-600 bg-teal-50' },
+          { label: 'Người dùng', value: stats.totalUsers, icon: Users, color: 'text-sky-600 bg-sky-50' },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-xl border border-border bg-background p-4 flex flex-col gap-2"
+          >
+            <div className={`w-9 h-9 rounded-lg grid place-items-center ${item.color}`}>
+              <item.icon size={18} />
+            </div>
             <div>
-              <p className="text-xs text-foreground-muted font-medium">{stat.label}</p>
-              <p className="font-heading text-2xl font-black text-foreground mt-1 tabular-nums">
-                {stat.count}
-              </p>
+              <p className="text-2xl font-bold tracking-tight">{item.value.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">{item.label}</p>
             </div>
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-800 border border-amber-200">
-              <stat.icon className="h-5 w-5" />
-            </div>
-          </Card>
+          </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Hành động nhanh quản trị</CardTitle>
-            <CardDescription className="text-xs">
-              Các chức năng thường dùng cho biên tập viên và admin
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button asChild variant="outline" className="w-full justify-start gap-2">
-              <Link to="/admin/import">
-                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                <span>Nhập câu hỏi từ file CSV / Excel</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full justify-start gap-2">
-              <Link to="/admin/questions">
-                <HelpCircle className="h-4 w-4 text-primary" />
-                <span>Tạo câu hỏi mới vào ngân hàng</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full justify-start gap-2">
-              <Link to="/admin/subjects">
-                <Layers className="h-4 w-4 text-amber-700" />
-                <span>Quản lý danh mục & chủ đề</span>
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Quick links */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Truy cập nhanh</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { to: '/admin/subjects', label: 'Quản lý môn học', icon: BookOpen },
+            { to: '/admin/questions', label: 'Ngân hàng câu hỏi', icon: HelpCircle },
+            { to: '/admin/import', label: 'Import CSV/XLSX', icon: Upload },
+            { to: '/admin/users', label: 'Người dùng & Vai trò', icon: Users },
+          ].map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="flex items-center gap-3 rounded-xl border border-border bg-background p-4 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+            >
+              <link.icon size={18} className="text-primary shrink-0" />
+              <span className="text-sm font-medium">{link.label}</span>
+              <ArrowRight size={14} className="ml-auto text-muted-foreground" />
+            </Link>
+          ))}
+        </div>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Trạng thái bảo mật & RLS</CardTitle>
-            <CardDescription className="text-xs">
-              Tuân thủ ranh giới an toàn dữ liệu
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-xs text-foreground-muted">
-            <div className="flex items-center gap-2 text-success font-medium">
-              <ShieldCheck className="h-4 w-4" />
-              <span>Row Level Security (RLS) đang kích hoạt trên mọi bảng</span>
+      {/* Recent audit log */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Hoạt động gần đây</h2>
+          <Link to="/admin/audit" className="text-xs text-primary hover:underline flex items-center gap-1">
+            Xem tất cả <ArrowRight size={12} />
+          </Link>
+        </div>
+        <div className="rounded-xl border border-border overflow-hidden">
+          {auditQuery.isPending ? (
+            <div className="p-6 flex justify-center"><LoadingSpinner /></div>
+          ) : auditQuery.isError ? (
+            <div className="p-6 flex items-center gap-2 text-destructive text-sm">
+              <AlertCircle size={16} /> Không thể tải nhật ký hoạt động.
             </div>
-            <p className="leading-relaxed">
-              Đáp án câu hỏi được bảo vệ độc quyền ở phía server database. Client chỉ nhận câu hỏi và lựa chọn, không thể trích xuất đáp án đúng trước hạn nộp bài.
-            </p>
-          </CardContent>
-        </Card>
+          ) : auditQuery.data.data.length === 0 ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">Chưa có hoạt động nào.</div>
+          ) : (
+            <div className="divide-y divide-border">
+              {auditQuery.data.data.map((log) => (
+                <div key={log.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="w-8 h-8 rounded-full bg-muted grid place-items-center shrink-0">
+                    <Activity size={14} className="text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {ACTION_LABEL[log.action] ?? log.action}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {log.profiles?.display_name ?? 'Unknown'} ·{' '}
+                      {new Date(log.created_at).toLocaleString('vi-VN')}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="ml-auto shrink-0 text-xs">
+                    {log.target_entity}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

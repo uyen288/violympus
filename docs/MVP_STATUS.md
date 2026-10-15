@@ -38,6 +38,26 @@ Last updated: 2026-10-15
   - **Migration & RPC Mới:** `011_guest_evaluation.sql` với 2 hàm `check_practice_answer` và `grade_guest_exam` (anon-accessible, bảo mật tuyệt đối đáp án gốc trên server).
   - **Verification:** `npm run typecheck` (0 errors), `npm run lint` (0 errors), `npm test` (11/11 tests passing bao gồm test suite `examService`), `npm run build` (production build thành công).
 
+- **Phase 5: Admin Studio & Server-side Content Operations (`VIOLYMPUS_ADMIN.md`)**
+  - **Database & Server-Side Security (`012_admin_rpc.sql`):**
+    - Security Definer helper functions: `is_admin_or_editor()`, `is_admin()` with fixed `search_path`.
+    - Server-side Content RPCs: `admin_upsert_subject`, `admin_delete_subject`, `admin_get_question` (safely exposes answer keys only to authorized staff), `admin_upsert_question` (auto version bump + audit logging), `admin_delete_question`.
+    - User & Role RPCs: `admin_list_users` (safe user list without leaking emails or passwords), `admin_set_user_role` (atomic role update, guards against demoting the last remaining admin).
+    - Batch Import RPCs: `create_import_job`, `import_questions_batch` supporting `skip`, `overwrite`, and `error` duplicate policies.
+  - **Admin Studio Interface (`/admin/*`):**
+    - `/admin`: Real overview dashboard reading live counts of questions by status, subjects, import jobs, and recent audit activity.
+    - `/admin/subjects`: Full CRUD modal for subjects, automatic slug generation, Lucide icon support, sort order.
+    - `/admin/questions`: Questions bank with filters by type, difficulty, status, text search, server-side pagination, and delete confirmation.
+    - `/admin/questions/new` & `/admin/questions/:questionId`: Dynamic form adapting to question types (`single_choice`, `multiple_choice`, `true_false`, `fill_blank`, `matching`), options builder, answer key payload, points, time limits, and draft/published states.
+    - `/admin/import`: CSV drag-and-drop uploader with pure client-side validation, formula-injection-safe error report download, built-in CSV template, duplicate policy selector, and job history.
+    - `/admin/users`: User management table with role assignment dialog and confirm protection.
+    - `/admin/audit-log`: Append-only audit trail viewer showing actor, action labels, target entities, and change metadata chips.
+  - **Verification:**
+    - `npm run typecheck` (0 errors)
+    - `npm run lint` (0 errors, 0 warnings)
+    - `npm test` (18/18 tests passing across 4 test suites, including `adminImportService.test.ts`)
+    - `npm run build` (production build succeeded)
+
 ## 🔜 Next Up: Phase 4 — Realtime Arena & Battle Rank
 
 - Room lifecycle (create, join via code, leave)
