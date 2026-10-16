@@ -21,7 +21,7 @@ import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage';
 
 // App Pages (RequireAuth)
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
-import { PracticePage } from '@/features/practice/pages/PracticePage';
+import { PracticePage } from '@/features/practice';
 import { ArenaLobbyPage } from '@/features/arena/pages/ArenaLobbyPage';
 import { ProfilePage } from '@/features/profile/pages/ProfilePage';
 import { SettingsPage } from '@/features/settings/pages/SettingsPage';

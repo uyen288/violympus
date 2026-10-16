@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { RotateCcw, Trophy, Sparkles, Heart } from 'lucide-react';
+import { RotateCcw, Trophy, Sparkles, Heart, ArrowLeft, BookOpen, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { getMatchingCardsForSubjects, SUBJECT_METAS } from '../data/practiceBank';
 
 interface CardItem {
   id: string;
@@ -11,29 +12,15 @@ interface CardItem {
   category: string;
 }
 
-const CARDS_DATA: CardItem[] = [
-  { id: '1', pairId: 'pair-1', text: '√64', category: 'Toán' },
-  { id: '2', pairId: 'pair-1', text: '8', category: 'Toán' },
+interface MatchingGameProps {
+  selectedSubjectSlugs: string[];
+  onBack: () => void;
+  onChangeSubjects?: () => void;
+}
 
-  { id: '3', pairId: 'pair-2', text: '2^5', category: 'Toán' },
-  { id: '4', pairId: 'pair-2', text: '32', category: 'Toán' },
-
-  { id: '5', pairId: 'pair-3', text: 'Gigantic', category: 'Anh' },
-  { id: '6', pairId: 'pair-3', text: 'Enormous', category: 'Anh' },
-
-  { id: '7', pairId: 'pair-4', text: 'Chiến dịch Điện Biên Phủ', category: 'Sử' },
-  { id: '8', pairId: 'pair-4', text: 'Năm 1954', category: 'Sử' },
-
-  { id: '9', pairId: 'pair-5', text: 'Đỉnh núi cao nhất VN', category: 'Địa' },
-  { id: '10', pairId: 'pair-5', text: 'Fansipan (3.143m)', category: 'Địa' },
-
-  { id: '11', pairId: 'pair-6', text: 'Truyện Kiều', category: 'Văn' },
-  { id: '12', pairId: 'pair-6', text: 'Đại thi hào Nguyễn Du', category: 'Văn' },
-];
-
-export function MatchingGame({ onBack }: { onBack: () => void }) {
+export function MatchingGame({ selectedSubjectSlugs, onBack, onChangeSubjects }: MatchingGameProps) {
   const [cards, setCards] = useState<CardItem[]>(() =>
-    [...CARDS_DATA].sort(() => Math.random() - 0.5)
+    getMatchingCardsForSubjects(selectedSubjectSlugs, 6)
   );
   const [selectedCards, setSelectedCards] = useState<CardItem[]>([]);
   const [matchedPairs, setMatchedPairs] = useState<string[]>([]);
@@ -43,8 +30,8 @@ export function MatchingGame({ onBack }: { onBack: () => void }) {
   const [isWon, setIsWon] = useState(false);
 
   const initGame = () => {
-    const shuffled = [...CARDS_DATA].sort(() => Math.random() - 0.5);
-    setCards(shuffled);
+    const newCards = getMatchingCardsForSubjects(selectedSubjectSlugs, 6);
+    setCards(newCards);
     setSelectedCards([]);
     setMatchedPairs([]);
     setLives(3);
@@ -74,7 +61,7 @@ export function MatchingGame({ onBack }: { onBack: () => void }) {
         setTimeout(() => {
           setMatchedPairs((prev) => {
             const next = [...prev, first.pairId];
-            if (next.length === CARDS_DATA.length / 2) {
+            if (next.length === cards.length / 2) {
               setIsWon(true);
             }
             return next;
@@ -98,25 +85,35 @@ export function MatchingGame({ onBack }: { onBack: () => void }) {
     }
   };
 
+  const activeSubjectsLabel = selectedSubjectSlugs.length === 0
+    ? 'Tất cả 11 lĩnh vực'
+    : selectedSubjectSlugs
+        .map((s) => SUBJECT_METAS.find((m) => m.slug === s)?.shortName || s)
+        .join(', ');
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto p-4 animate-fade-in">
       {/* Game Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface border border-border shadow-xs">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="default" className="text-xs">
               Violympic Classic
+            </Badge>
+            <Badge variant="outline" className="text-xs font-semibold text-primary border-primary/30">
+              <BookOpen className="h-3 w-3 mr-1" />
+              Lĩnh vực: {activeSubjectsLabel}
             </Badge>
             <h2 className="font-heading font-extrabold text-lg sm:text-xl text-foreground">
               Cặp Đôi Hoàn Hảo (Matching Pairs)
             </h2>
           </div>
           <p className="text-xs text-foreground-muted">
-            Tìm và bấm chọn 2 ô có ý nghĩa tương đương hoặc lời giải khớp nhau để ghi điểm!
+            Tìm và bấm chọn 2 ô có ý nghĩa tương đương hoặc lời giải khớp nhau từ các lĩnh vực bạn đã chọn!
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           {/* Lives */}
           <div className="flex items-center gap-1 bg-surface-muted px-3 py-1.5 rounded-xl border border-border">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -140,11 +137,30 @@ export function MatchingGame({ onBack }: { onBack: () => void }) {
             <span>Chơi lại</span>
           </Button>
 
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-xs">
-            Trở về
+          <Button variant="ghost" size="sm" onClick={onBack} className="gap-1 text-xs">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Trở về</span>
           </Button>
         </div>
       </div>
+
+      {/* Empty cards warning */}
+      {cards.length === 0 && (
+        <Card className="p-8 text-center border-warning/30 bg-warning/5 space-y-3">
+          <AlertCircle className="h-8 w-8 text-warning mx-auto" />
+          <h3 className="font-heading font-bold text-base text-foreground">
+            Chưa có câu hỏi cho lĩnh vực đã chọn
+          </h3>
+          <p className="text-xs text-foreground-muted max-w-md mx-auto">
+            Vui lòng chọn thêm các lĩnh vực khác để nạp câu hỏi cho trò chơi.
+          </p>
+          {onChangeSubjects && (
+            <Button variant="outline" size="sm" onClick={onChangeSubjects}>
+              Chọn lại lĩnh vực
+            </Button>
+          )}
+        </Card>
+      )}
 
       {/* Victory / Game Over Overlay */}
       {isWon && (
@@ -156,7 +172,8 @@ export function MatchingGame({ onBack }: { onBack: () => void }) {
             Tuyệt vời! Bạn đã hoàn thành xuất sắc!
           </h3>
           <p className="text-sm text-foreground-muted">
-            Điểm số đạt được: <strong className="text-accent-gold font-mono">{score} điểm</strong> với {lives} mạng còn lại.
+            Lĩnh vực: <strong>{activeSubjectsLabel}</strong> • Điểm số đạt được:{' '}
+            <strong className="text-accent-gold font-mono">{score} điểm</strong> với {lives} mạng còn lại.
           </p>
           <div className="flex justify-center gap-3">
             <Button variant="primary" size="sm" onClick={initGame} className="font-bold">
@@ -173,7 +190,7 @@ export function MatchingGame({ onBack }: { onBack: () => void }) {
         <Card className="p-8 text-center bg-gradient-to-b from-danger/10 to-surface border-danger/30 space-y-4">
           <h3 className="font-heading text-2xl font-bold text-danger">Hết mạng rồi!</h3>
           <p className="text-sm text-foreground-muted">
-            Bạn đã ghép sai 3 lần. Đừng nản lòng, hãy thử lại để rèn luyện trí nhớ nhé!
+            Bạn đã ghép sai 3 lần trong lĩnh vực {activeSubjectsLabel}. Đừng nản lòng, hãy thử lại để rèn luyện trí nhớ nhé!
           </p>
           <div className="flex justify-center gap-3">
             <Button variant="primary" size="sm" onClick={initGame} className="font-bold">
@@ -186,8 +203,8 @@ export function MatchingGame({ onBack }: { onBack: () => void }) {
         </Card>
       )}
 
-      {/* Cards Grid (4 columns on md, 3 on sm) */}
-      {!isWon && !isGameOver && (
+      {/* Cards Grid */}
+      {!isWon && !isGameOver && cards.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
           {cards.map((card) => {
             const isMatched = matchedPairs.includes(card.pairId);
@@ -207,7 +224,7 @@ export function MatchingGame({ onBack }: { onBack: () => void }) {
                     : 'border-border bg-surface hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-900/40 text-foreground hover:scale-102 shadow-xs cursor-pointer'
                 }`}
               >
-                <span className="text-[10px] font-mono uppercase tracking-wider text-foreground-muted mb-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-foreground-muted mb-1 font-semibold">
                   [{card.category}]
                 </span>
                 <span className="text-xs sm:text-sm font-bold leading-snug">

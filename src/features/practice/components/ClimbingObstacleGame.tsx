@@ -1,113 +1,20 @@
 import { useState } from 'react';
-import { Mountain, Heart, Trophy, ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
+import { Mountain, Heart, Trophy, ArrowRight, ArrowLeft, CheckCircle2, XCircle, Sparkles, RotateCcw, BookOpen, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { getPracticeQuestionsForSubjects, SUBJECT_METAS, type PracticeQuestion } from '../data/practiceBank';
 
-interface ObstacleQuestion {
-  level: number;
-  subject: string;
-  prompt: string;
-  options: { key: string; text: string }[];
-  correctKey: string;
-  explanation: string;
+interface ClimbingObstacleGameProps {
+  selectedSubjectSlugs: string[];
+  onBack: () => void;
+  onChangeSubjects?: () => void;
 }
 
-const OBSTACLE_QUESTIONS: ObstacleQuestion[] = [
-  {
-    level: 1,
-    subject: 'Toán học',
-    prompt: 'Số nguyên tố chẵn duy nhất là số nào?',
-    options: [
-      { key: 'A', text: '0' },
-      { key: 'B', text: '2' },
-      { key: 'C', text: '4' },
-      { key: 'D', text: 'Không có' },
-    ],
-    correctKey: 'B',
-    explanation: 'Số 2 là số nguyên tố chẵn duy nhất, tất cả các số chẵn khác > 2 đều chia hết cho 2 nên là hợp số.',
-  },
-  {
-    level: 2,
-    subject: 'Vật lý',
-    prompt: 'Vận tốc truyền âm lớn nhất trong môi trường nào sau đây?',
-    options: [
-      { key: 'A', text: 'Chất rắn' },
-      { key: 'B', text: 'Chất lỏng' },
-      { key: 'C', text: 'Chất khí' },
-      { key: 'D', text: 'Chân không' },
-    ],
-    correctKey: 'A',
-    explanation: 'Âm thanh truyền nhanh nhất trong chất rắn, tiếp đến chất lỏng, chậm nhất trong chất khí và không truyền được trong chân không.',
-  },
-  {
-    level: 3,
-    subject: 'Hóa học',
-    prompt: 'Kim loại nào có nhiệt độ nóng chảy cao nhất, thường dùng làm dây tóc bóng đèn?',
-    options: [
-      { key: 'A', text: 'Sắt (Fe)' },
-      { key: 'B', text: 'Đồng (Cu)' },
-      { key: 'C', text: 'Vonfram (W)' },
-      { key: 'D', text: 'Bạch kim (Pt)' },
-    ],
-    correctKey: 'C',
-    explanation: 'Vonfram (W) có nhiệt độ nóng chảy lên tới ~3422 °C, cao nhất trong tất cả các kim loại.',
-  },
-  {
-    level: 4,
-    subject: 'Ngữ văn',
-    prompt: 'Bài thơ "Nam quốc sơn hà" được coi là bản Tuyên ngôn độc lập thứ mấy của dân tộc ta?',
-    options: [
-      { key: 'A', text: 'Thứ nhất' },
-      { key: 'B', text: 'Thứ hai' },
-      { key: 'C', text: 'Thứ ba' },
-      { key: 'D', text: 'Thứ tư' },
-    ],
-    correctKey: 'A',
-    explanation: 'Nam quốc sơn hà gắn liền với Lý Thường Kiệt được coi là bản Tuyên ngôn Độc lập đầu tiên của nước Việt.',
-  },
-  {
-    level: 5,
-    subject: 'Sinh học',
-    prompt: 'Đơn phân cấu tạo nên phân tử ADN là gì?',
-    options: [
-      { key: 'A', text: 'Axit amin' },
-      { key: 'B', text: 'Nuclêôtit' },
-      { key: 'C', text: 'Axit béo' },
-      { key: 'D', text: 'Glucôzơ' },
-    ],
-    correctKey: 'B',
-    explanation: 'ADN cấu tạo theo nguyên tắc đa phân từ các đơn phân là nuclêôtit (A, T, G, X).',
-  },
-  {
-    level: 6,
-    subject: 'Lịch sử',
-    prompt: 'Chiến thắng nào của quân dân ta đã đập tan tập đoàn cứ điểm mạnh nhất Đông Dương của thực dân Pháp?',
-    options: [
-      { key: 'A', text: 'Chiến dịch Việt Bắc 1947' },
-      { key: 'B', text: 'Chiến dịch Biên giới 1950' },
-      { key: 'C', text: 'Chiến dịch Điện Biên Phủ 1954' },
-      { key: 'D', text: 'Chiến dịch Hồ Chí Minh 1975' },
-    ],
-    correctKey: 'C',
-    explanation: 'Chiến thắng Điện Biên Phủ "lừng lẫy năm châu, chấn động địa cầu" ngày 7/5/1954.',
-  },
-  {
-    level: 7,
-    subject: 'Tin học',
-    prompt: 'Độ phức tạp thời gian trung bình của thuật toán Tìm kiếm nhị phân (Binary Search) là bao nhiêu?',
-    options: [
-      { key: 'A', text: 'O(1)' },
-      { key: 'B', text: 'O(log n)' },
-      { key: 'C', text: 'O(n)' },
-      { key: 'D', text: 'O(n log n)' },
-    ],
-    correctKey: 'B',
-    explanation: 'Sau mỗi bước tìm kiếm nhị phân, không gian tìm kiếm giảm đi một nửa nên độ phức tạp là O(log n).',
-  },
-];
-
-export function ClimbingObstacleGame({ onBack }: { onBack: () => void }) {
+export function ClimbingObstacleGame({ selectedSubjectSlugs, onBack, onChangeSubjects }: ClimbingObstacleGameProps) {
+  const [questions, setQuestions] = useState<PracticeQuestion[]>(() =>
+    getPracticeQuestionsForSubjects(selectedSubjectSlugs, 7)
+  );
   const [currentStep, setCurrentStep] = useState(0);
   const [lives, setLives] = useState(3);
   const [score, setScore] = useState(0);
@@ -117,10 +24,23 @@ export function ClimbingObstacleGame({ onBack }: { onBack: () => void }) {
   const [isGameOver, setIsGameOver] = useState(false);
   const [isWon, setIsWon] = useState(false);
 
-  const question = OBSTACLE_QUESTIONS[currentStep];
+  const handleRestart = () => {
+    const fresh = getPracticeQuestionsForSubjects(selectedSubjectSlugs, 7);
+    setQuestions(fresh);
+    setCurrentStep(0);
+    setLives(3);
+    setScore(0);
+    setStreak(0);
+    setSelectedOption(null);
+    setIsAnswered(false);
+    setIsGameOver(false);
+    setIsWon(false);
+  };
+
+  const question = questions[currentStep];
 
   const handleSelectOption = (key: string) => {
-    if (isAnswered || isGameOver || isWon) return;
+    if (isAnswered || isGameOver || isWon || !question) return;
 
     setSelectedOption(key);
     setIsAnswered(true);
@@ -144,7 +64,7 @@ export function ClimbingObstacleGame({ onBack }: { onBack: () => void }) {
   };
 
   const handleNextStep = () => {
-    if (currentStep < OBSTACLE_QUESTIONS.length - 1) {
+    if (currentStep < questions.length - 1) {
       setCurrentStep((s) => s + 1);
       setSelectedOption(null);
       setIsAnswered(false);
@@ -153,36 +73,36 @@ export function ClimbingObstacleGame({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const handleRestart = () => {
-    setCurrentStep(0);
-    setLives(3);
-    setScore(0);
-    setStreak(0);
-    setSelectedOption(null);
-    setIsAnswered(false);
-    setIsGameOver(false);
-    setIsWon(false);
-  };
+  const activeSubjectsLabel = selectedSubjectSlugs.length === 0
+    ? 'Tất cả 11 lĩnh vực'
+    : selectedSubjectSlugs
+        .map((s) => SUBJECT_METAS.find((m) => m.slug === s)?.shortName || s)
+        .join(', ');
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto p-4 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface border border-border shadow-xs">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Badge variant="default" className="text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="warning" className="text-xs">
               Violympic Classic
+            </Badge>
+            <Badge variant="outline" className="text-xs font-semibold text-primary border-primary/30">
+              <BookOpen className="h-3 w-3 mr-1" />
+              Lĩnh vực: {activeSubjectsLabel}
             </Badge>
             <h2 className="font-heading font-extrabold text-lg sm:text-xl text-foreground">
               Vượt Chướng Ngại Vật (Khỉ Leo Núi)
             </h2>
           </div>
           <p className="text-xs text-foreground-muted">
-            Leo lên đỉnh núi tri thức! Trả lời đúng để leo lên vách đá tiếp theo, chuỗi thắng nhân bội điểm số.
+            Leo lên đỉnh núi tri thức! Trả lời đúng các câu hỏi trắc nghiệm của lĩnh vực đã chọn để nhận thưởng Combo.
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          {/* Lives */}
           <div className="flex items-center gap-1 bg-surface-muted px-3 py-1.5 rounded-xl border border-border">
             {Array.from({ length: 3 }).map((_, i) => (
               <Heart
@@ -194,105 +114,128 @@ export function ClimbingObstacleGame({ onBack }: { onBack: () => void }) {
             ))}
           </div>
 
+          {/* Score & Streak */}
           <div className="flex items-center gap-1.5 font-mono font-bold text-accent-gold text-base">
             <Trophy className="h-4 w-4" />
             <span>{score} đ</span>
           </div>
 
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-xs">
-            Trở về
+          {streak > 1 && (
+            <Badge variant="gold" className="text-[10px] animate-pulse">
+              Combo x{streak}
+            </Badge>
+          )}
+
+          <Button variant="outline" size="sm" onClick={handleRestart} className="gap-1 text-xs">
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span>Chơi lại</span>
+          </Button>
+
+          <Button variant="ghost" size="sm" onClick={onBack} className="gap-1 text-xs">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Trở về</span>
           </Button>
         </div>
       </div>
 
-      {/* Mountain Progress Visualizer */}
-      <div className="p-4 rounded-2xl bg-surface border border-border shadow-xs space-y-2">
-        <div className="flex items-center justify-between text-xs font-semibold text-foreground-muted">
-          <span className="flex items-center gap-1.5">
-            <Mountain className="h-4 w-4 text-primary" />
-            <span>Độ cao: Chặng {currentStep + 1} / {OBSTACLE_QUESTIONS.length}</span>
-          </span>
-          {streak > 1 && (
-            <Badge variant="warning" className="text-[10px] font-mono animate-bounce">
-              🔥 Chuỗi x{streak} combo!
-            </Badge>
+      {/* Empty questions warning */}
+      {questions.length === 0 && (
+        <Card className="p-8 text-center border-warning/30 bg-warning/5 space-y-3">
+          <AlertCircle className="h-8 w-8 text-warning mx-auto" />
+          <h3 className="font-heading font-bold text-base text-foreground">
+            Chưa có câu hỏi cho lĩnh vực đã chọn
+          </h3>
+          <p className="text-xs text-foreground-muted max-w-md mx-auto">
+            Vui lòng chọn thêm các lĩnh vực khác để nạp câu hỏi cho trò chơi.
+          </p>
+          {onChangeSubjects && (
+            <Button variant="outline" size="sm" onClick={onChangeSubjects}>
+              Chọn lại lĩnh vực
+            </Button>
           )}
-        </div>
+        </Card>
+      )}
 
-        {/* Multi-step progress bar */}
-        <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex gap-1 p-0.5">
-          {OBSTACLE_QUESTIONS.map((_, i) => (
+      {/* Mountain Progress Visualizer */}
+      {questions.length > 0 && !isWon && !isGameOver && (
+        <div className="p-4 rounded-2xl bg-surface border border-border shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-foreground-muted">
+            <span className="flex items-center gap-1">
+              <Mountain className="h-4 w-4 text-primary" />
+              <span>Bậc đèo: {currentStep + 1} / {questions.length}</span>
+            </span>
+            <span className="font-mono text-accent-gold">
+              Đỉnh núi: {Math.round(((currentStep) / questions.length) * 100)}%
+            </span>
+          </div>
+          <div className="h-3 rounded-full bg-surface-muted overflow-hidden border border-border/50">
             <div
-              key={i}
-              className={`flex-1 rounded-full transition-all duration-300 ${
-                i < currentStep
-                  ? 'bg-success'
-                  : i === currentStep
-                  ? 'bg-primary'
-                  : 'bg-transparent'
-              }`}
+              className="h-full bg-gradient-to-r from-primary to-accent-gold transition-all duration-500 rounded-full"
+              style={{ width: `${((currentStep) / questions.length) * 100}%` }}
             />
-          ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Victory / Game Over */}
+      {/* Victory / Game Over Overlay */}
       {isWon && (
-        <Card className="p-8 text-center bg-gradient-to-b from-success/15 to-surface border-success/30 space-y-4">
+        <Card className="p-8 text-center bg-gradient-to-b from-success/10 to-surface border-success/30 space-y-4">
           <div className="inline-flex p-3 rounded-full bg-success/20 text-success">
-            <Mountain className="h-10 w-10" />
+            <Sparkles className="h-8 w-8" />
           </div>
           <h3 className="font-heading text-2xl font-bold text-foreground">
-            Chinh phục đỉnh núi thành công!
+            Chúc mừng! Bạn đã chạm đỉnh núi thành công!
           </h3>
           <p className="text-sm text-foreground-muted">
-            Bạn đã xuất sắc vượt qua toàn bộ các vách núi tri thức với <strong className="text-accent-gold font-mono">{score} điểm</strong>!
+            Lĩnh vực: <strong>{activeSubjectsLabel}</strong> • Tổng điểm:{' '}
+            <strong className="text-accent-gold font-mono">{score} điểm</strong> ({lives} mạng còn lại).
           </p>
           <div className="flex justify-center gap-3">
             <Button variant="primary" size="sm" onClick={handleRestart} className="font-bold">
-              Chinh phục lại
+              Chinh phục vách núi mới
             </Button>
             <Button variant="outline" size="sm" onClick={onBack}>
-              Trở về trung tâm
+              Về trung tâm luyện tập
             </Button>
           </div>
         </Card>
       )}
 
       {isGameOver && (
-        <Card className="p-8 text-center bg-gradient-to-b from-danger/15 to-surface border-danger/30 space-y-4">
-          <h3 className="font-heading text-2xl font-bold text-danger">Rơi khỏi vách núi!</h3>
+        <Card className="p-8 text-center bg-gradient-to-b from-danger/10 to-surface border-danger/30 space-y-4">
+          <h3 className="font-heading text-2xl font-bold text-danger">Bạn đã trượt chân!</h3>
           <p className="text-sm text-foreground-muted">
-            Bạn đã hết mạng ở Chặng {currentStep + 1}. Hãy thử lại để chinh phục đỉnh cao nhé!
+            Bạn đã dùng hết cả 3 mạng ở chặng thứ {currentStep + 1} ({activeSubjectsLabel}). Đừng bỏ cuộc, hãy leo lại nhé!
           </p>
           <div className="flex justify-center gap-3">
             <Button variant="primary" size="sm" onClick={handleRestart} className="font-bold">
-              Leo núi lại
+              Leo lại từ đầu
             </Button>
             <Button variant="outline" size="sm" onClick={onBack}>
-              Trở về trung tâm
+              Về trung tâm luyện tập
             </Button>
           </div>
         </Card>
       )}
 
-      {/* Active Question Card */}
-      {!isWon && !isGameOver && (
+      {/* Current Question Card */}
+      {!isWon && !isGameOver && question && (
         <Card className="border-border shadow-xs">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <Badge variant="outline" className="text-xs font-semibold">
-              {question.subject}
-            </Badge>
-            <span className="text-xs font-mono text-accent-gold font-bold">
-              +{(10 + (streak + 1) * 5)} điểm
-            </span>
-          </CardHeader>
-
-          <CardContent className="space-y-6">
-            <h3 className="font-heading text-lg sm:text-xl font-bold text-foreground">
+          <CardHeader className="pb-3 border-b border-border/50">
+            <div className="flex items-center justify-between gap-2">
+              <Badge variant="outline" className="text-xs font-semibold">
+                Môn: {question.subjectName}
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                Chặng {currentStep + 1}
+              </Badge>
+            </div>
+            <h3 className="font-heading text-base sm:text-lg font-bold text-foreground pt-2 leading-snug">
               {question.prompt}
             </h3>
+          </CardHeader>
 
+          <CardContent className="space-y-4 pt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {question.options.map((opt) => {
                 const isSelected = selectedOption === opt.key;
@@ -362,7 +305,7 @@ export function ClimbingObstacleGame({ onBack }: { onBack: () => void }) {
                     onClick={handleNextStep}
                     className="gap-1.5 font-bold shadow-xs"
                   >
-                    <span>{currentStep < OBSTACLE_QUESTIONS.length - 1 ? 'Chặng tiếp theo' : 'Xem kết quả'}</span>
+                    <span>{currentStep < questions.length - 1 ? 'Chặng tiếp theo' : 'Xem kết quả'}</span>
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
