@@ -176,8 +176,17 @@ export function AppLayout() {
         <div className="p-4 border-t border-border bg-surface-muted/40">
           <div className="flex items-center justify-between">
             <Link to="/profile" className="flex items-center gap-3 overflow-hidden group">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary font-bold text-sm">
-                {user?.displayName?.[0]?.toUpperCase() || 'U'}
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary font-bold text-sm overflow-hidden border border-border">
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.displayName}
+                    className="h-full w-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  user?.displayName?.[0]?.toUpperCase() || 'U'
+                )}
               </div>
               <div className="overflow-hidden text-left">
                 <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
@@ -226,10 +235,19 @@ export function AppLayout() {
             <LanguageSwitcher />
             <Link
               to="/profile"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-primary font-bold text-xs"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-primary font-bold text-xs overflow-hidden border border-border"
               aria-label="Xem hồ sơ"
             >
-              {user?.displayName?.[0]?.toUpperCase() || 'U'}
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.displayName}
+                  className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                user?.displayName?.[0]?.toUpperCase() || 'U'
+              )}
             </Link>
           </div>
         </header>

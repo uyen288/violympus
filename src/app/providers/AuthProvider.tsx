@@ -23,8 +23,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: data.id,
           email: user.email ?? '',
           username: data.username || user.email?.split('@')[0] || 'User',
-          displayName: data.display_name || user.user_metadata?.full_name || 'User',
-          avatarUrl: data.avatar_url || null,
+          displayName:
+            data.display_name ||
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            'User',
+          avatarUrl:
+            data.avatar_url ||
+            user.user_metadata?.avatar_url ||
+            user.user_metadata?.picture ||
+            null,
           role: (data.role as UserRole) || 'learner',
           xp: data.xp || 0,
           level: data.level || 1,
@@ -36,9 +44,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile({
           id: user.id,
           email: user.email ?? '',
-          username: user.user_metadata?.username || user.email?.split('@')[0] || 'User',
-          displayName: user.user_metadata?.full_name || 'User',
-          avatarUrl: user.user_metadata?.avatar_url || null,
+          username:
+            user.user_metadata?.username || user.email?.split('@')[0] || 'User',
+          displayName:
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            'User',
+          avatarUrl:
+            user.user_metadata?.avatar_url ||
+            user.user_metadata?.picture ||
+            null,
           role: metaRole,
           xp: 0,
           level: 1,
@@ -51,8 +66,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: user.id,
         email: user.email ?? '',
         username: user.email?.split('@')[0] || 'User',
-        displayName: user.user_metadata?.full_name || 'User',
-        avatarUrl: null,
+        displayName:
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          'User',
+        avatarUrl:
+          user.user_metadata?.avatar_url ||
+          user.user_metadata?.picture ||
+          null,
         role: 'learner',
         xp: 0,
         level: 1,
@@ -63,7 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshProfile = React.useCallback(async () => {
-    if (authUser) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setAuthUser(user);
+      await fetchProfile(user);
+    } else if (authUser) {
       await fetchProfile(authUser);
     }
   }, [authUser, fetchProfile]);

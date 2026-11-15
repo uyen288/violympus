@@ -14,16 +14,18 @@ import { PrivacyPage } from '@/features/dashboard/pages/PrivacyPage';
 import { ExamsListPage, ExamTakePage } from '@/features/exams';
 
 // Auth Pages
-import { LoginPage } from '@/features/auth/pages/LoginPage';
-import { RegisterPage } from '@/features/auth/pages/RegisterPage';
-import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage';
-import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage';
+import {
+  LoginPage,
+  RegisterPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+} from '@/features/auth';
 
 // App Pages (RequireAuth)
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { PracticePage } from '@/features/practice';
 import { ArenaLobbyPage } from '@/features/arena/pages/ArenaLobbyPage';
-import { ProfilePage } from '@/features/profile/pages/ProfilePage';
+import { ProfilePage } from '@/features/profile';
 import { SettingsPage } from '@/features/settings/pages/SettingsPage';
 
 // Admin Pages (RequireRole: editor / admin)

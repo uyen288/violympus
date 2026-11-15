@@ -10,6 +10,7 @@ import { mapSupabaseAuthError } from '@/lib/errors/AppError';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { GoogleAuthButton } from '@/features/auth/components/GoogleAuthButton';
 import { toast } from 'sonner';
 
 const loginSchema = z.object({
@@ -25,6 +26,11 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
   const [authError, setAuthError] = React.useState<string | null>(null);
 
+  const oauthError = searchParams.get('error_description')
+    ? decodeURIComponent(searchParams.get('error_description') || '')
+    : null;
+  const currentError = authError || oauthError;
+
   const {
     register,
     handleSubmit,
@@ -32,6 +38,10 @@ export function LoginPage() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+
+  const redirectParam = searchParams.get('redirect');
+  const redirectTarget = redirectParam ? decodeURIComponent(redirectParam) : '/dashboard';
+  const googleRedirectUrl = `${window.location.origin}${redirectTarget.startsWith('/') ? redirectTarget : `/${redirectTarget}`}`;
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -48,8 +58,7 @@ export function LoginPage() {
       }
 
       toast.success(t('auth.loginSuccess', 'Đăng nhập thành công!'));
-      const redirect = searchParams.get('redirect');
-      navigate(redirect ? decodeURIComponent(redirect) : '/dashboard');
+      navigate(redirectTarget);
     } catch (err: unknown) {
       setAuthError(err instanceof Error ? err.message : 'Đã xảy ra lỗi khi đăng nhập');
     }
@@ -70,17 +79,35 @@ export function LoginPage() {
           </CardDescription>
         </CardHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            {authError && (
-              <div
-                className="rounded-lg bg-danger-soft border border-danger/20 p-3 text-xs font-medium text-danger text-left"
-                role="alert"
-              >
-                {authError}
-              </div>
-            )}
+        <CardContent className="space-y-4">
+          {currentError && (
+            <div
+              className="rounded-lg bg-danger-soft border border-danger/20 p-3 text-xs font-medium text-danger text-left"
+              role="alert"
+            >
+              {currentError}
+            </div>
+          )}
 
+          {/* Google OAuth Login */}
+          <GoogleAuthButton
+            mode="login"
+            redirectTo={googleRedirectUrl}
+            onError={(msg) => setAuthError(msg)}
+          />
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-surface px-2 text-foreground-muted font-medium">
+                {t('auth.or_continue_with', 'Hoặc đăng nhập bằng email')}
+              </span>
+            </div>
+          </div>
+
+          <form id="login-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
               label="Email"
               type="email"
@@ -108,27 +135,28 @@ export function LoginPage() {
                 </Link>
               </div>
             </div>
-          </CardContent>
+          </form>
+        </CardContent>
 
-          <CardFooter className="flex flex-col gap-4">
-            <Button
-              type="submit"
-              className="w-full gap-2 font-bold"
-              size="lg"
-              isLoading={isSubmitting}
-            >
-              <LogIn className="h-4 w-4" />
-              <span>{t('auth.login', 'Đăng nhập')}</span>
-            </Button>
+        <CardFooter className="flex flex-col gap-4">
+          <Button
+            type="submit"
+            form="login-form"
+            className="w-full gap-2 font-bold"
+            size="lg"
+            isLoading={isSubmitting}
+          >
+            <LogIn className="h-4 w-4" />
+            <span>{t('auth.login', 'Đăng nhập')}</span>
+          </Button>
 
-            <div className="text-center text-xs text-foreground-muted">
-              Chưa có tài khoản?{' '}
-              <Link to="/register" className="font-bold text-primary hover:underline">
-                {t('auth.register', 'Đăng ký ngay')}
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
+          <div className="text-center text-xs text-foreground-muted">
+            Chưa có tài khoản?{' '}
+            <Link to="/register" className="font-bold text-primary hover:underline">
+              {t('auth.register', 'Đăng ký ngay')}
+            </Link>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );

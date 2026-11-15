@@ -763,6 +763,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      delete_own_account: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
       start_attempt: {
         Args: {
           p_exam_id: string;
