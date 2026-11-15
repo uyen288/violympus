@@ -1,6 +1,6 @@
--- seed.sql
--- Violympus Idempotent Comprehensive Seed Data
--- Full spectrum of subjects: Toán, Văn, Anh, Lý, Hóa, Sinh, Sử, Địa, Kinh tế & Pháp luật, Tin học, Logic
+-- 016_rich_questions_seed.sql
+-- Comprehensive initialization and rich seed of subjects, topics, questions, options, answers, exams, and badges
+-- Full spectrum of 11 subjects, 16 topics, 40 academic questions, 7 exams, and badges
 -- Classic Violympic-inspired question formats: Trắc nghiệm tốc độ, Cặp đôi hoàn hảo (Matching), Điền số/từ (Fill-in), Đúng/Sai
 
 -- 1. Subjects (11 Môn học & Lĩnh vực toàn diện)
@@ -392,14 +392,7 @@ ON CONFLICT (id) DO UPDATE SET
   description = EXCLUDED.description;
 
 
--- =============================================
--- 9. Expanded Question Bank & Additional Exams (from 016_rich_questions_seed.sql)
--- =============================================
--- 016_rich_questions_seed.sql
--- Comprehensive expansion of question bank across all 11 subjects
--- Real academic questions with options, explanations, server-side secret answers, and exams
-
--- 1. Ensure topics for Computer Science (Tin học) & Logic
+-- 9. Additional Topics for Computer Science (Tin học) & Logic
 INSERT INTO public.topics (id, subject_id, slug, name, description, sort_order, status)
 VALUES
   (
@@ -424,7 +417,7 @@ ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description;
 
--- 2. Insert Additional High-Quality Questions (Q14 to Q40)
+-- 10. Insert Additional High-Quality Questions (Q14 to Q40)
 INSERT INTO public.questions (id, topic_id, type, difficulty, prompt, explanation, points, time_limit_seconds, status)
 VALUES
   -- Q14: Toán học - Tích phân cơ bản (Single choice)
@@ -783,7 +776,7 @@ ON CONFLICT (id) DO UPDATE SET
   points = EXCLUDED.points,
   time_limit_seconds = EXCLUDED.time_limit_seconds;
 
--- 3. Options for New Questions
+-- 11. Options for New Questions
 INSERT INTO public.question_options (question_id, option_key, content, sort_order)
 VALUES
   -- Q14: Tích phân
@@ -918,7 +911,7 @@ VALUES
 ON CONFLICT (question_id, option_key) DO UPDATE SET
   content = EXCLUDED.content;
 
--- 4. Server-side Official Answer Keys
+-- 12. Server-side Official Answer Keys
 INSERT INTO public.question_answers (question_id, answer_payload)
 VALUES
   ('00000000-0000-0000-0002-000000000014', '"B"'::jsonb),
@@ -951,7 +944,7 @@ VALUES
 ON CONFLICT (question_id) DO UPDATE SET
   answer_payload = EXCLUDED.answer_payload;
 
--- 5. Additional Standardized Exams
+-- 13. Additional Standardized Exams
 INSERT INTO public.exams (id, subject_id, title, description, time_limit_seconds, passing_score, total_points, status)
 VALUES
   (
@@ -988,7 +981,7 @@ ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
   description = EXCLUDED.description;
 
--- 6. Map Questions into Exams
+-- 14. Map Questions into Exams
 INSERT INTO public.exam_questions (exam_id, question_id, sort_order, points)
 VALUES
   -- Exam 5: Khoa học tự nhiên
