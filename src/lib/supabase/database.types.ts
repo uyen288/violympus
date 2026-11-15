@@ -37,6 +37,9 @@ export interface Database {
           last_active_date: string | null;
           study_seconds_today: number;
           climb_high_score: number;
+          is_banned: boolean;
+          banned_at: string | null;
+          ban_reason: string | null;
           is_public: boolean;
           created_at: string;
           updated_at: string;
@@ -55,6 +58,9 @@ export interface Database {
           last_active_date?: string | null;
           study_seconds_today?: number;
           climb_high_score?: number;
+          is_banned?: boolean;
+          banned_at?: string | null;
+          ban_reason?: string | null;
           is_public?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -73,6 +79,9 @@ export interface Database {
           last_active_date?: string | null;
           study_seconds_today?: number;
           climb_high_score?: number;
+          is_banned?: boolean;
+          banned_at?: string | null;
+          ban_reason?: string | null;
           is_public?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -938,6 +947,54 @@ export interface Database {
           reward_gems: number;
           new_streak: number;
           message: string;
+        };
+      };
+      admin_ban_user: {
+        Args: {
+          p_target_user_id: string;
+          p_ban: boolean;
+          p_reason?: string | null;
+        };
+        Returns: {
+          success: boolean;
+          user_id: string;
+          is_banned: boolean;
+        };
+      };
+      admin_delete_user: {
+        Args: {
+          p_target_user_id: string;
+        };
+        Returns: {
+          success: boolean;
+          user_id: string;
+        };
+      };
+      admin_update_user: {
+        Args: {
+          p_target_user_id: string;
+          p_display_name: string;
+          p_username: string;
+          p_role: string;
+          p_xp?: number | null;
+          p_gems?: number | null;
+        };
+        Returns: {
+          success: boolean;
+          user_id: string;
+        };
+      };
+      admin_create_user: {
+        Args: {
+          p_email: string;
+          p_display_name: string;
+          p_username: string;
+          p_role?: string;
+          p_gems?: number;
+        };
+        Returns: {
+          success: boolean;
+          user_id: string;
         };
       };
     };

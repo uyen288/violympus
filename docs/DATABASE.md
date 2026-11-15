@@ -131,6 +131,21 @@ Rationale: Exam and match results are part of the platform's data integrity. Ano
 - `public.modify_gems(p_amount integer, p_reason text)`: Modifies gems (positive to award, negative to spend) with strict non-negative check (`gems + p_amount >= 0`).
 - `public.claim_daily_checkin()`: Atomic check-in handler ensuring only one claim per calendar day, advancing 7-day streak rewards.
 
+## User Management & Ban Schema (`015_user_ban.sql`)
+
+### Ban Columns in `public.profiles`
+
+- `is_banned`: boolean NOT NULL DEFAULT false — True if account is banned from accessing the platform.
+- `banned_at`: timestamptz DEFAULT NULL — Timestamp when ban was issued.
+- `ban_reason`: text DEFAULT NULL — Reason supplied by the administrator.
+
+### Admin User RPCs
+
+- `public.admin_ban_user(p_target_user_id uuid, p_ban boolean, p_reason text)`: Bans or unbans a user account, logs action to `audit_logs`, protects against self-ban and admin-ban.
+- `public.admin_delete_user(p_target_user_id uuid)`: Deletes user profile and records audit trail.
+- `public.admin_update_user(...)`: Updates user profile display name, username, role, XP, and gems.
+- `public.admin_create_user(...)`: Creates a new user profile with specified role and initial gems.
+
 ## Generated Types
 
 TypeScript types generated from schema into `src/lib/supabase/database.types.ts`.

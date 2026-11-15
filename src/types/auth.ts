@@ -11,6 +11,8 @@ export interface UserProfile {
   level: number;
   gems?: number;
   streakDays?: number;
+  isBanned?: boolean;
+  banReason?: string | null;
   createdAt: string;
   updatedAt: string;
 }

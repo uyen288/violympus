@@ -50,8 +50,9 @@ Last updated: 2026-10-15
     - `/admin/questions`: Questions bank with filters by type, difficulty, status, text search, server-side pagination, and delete confirmation.
     - `/admin/questions/new` & `/admin/questions/:questionId`: Dynamic form adapting to question types (`single_choice`, `multiple_choice`, `true_false`, `fill_blank`, `matching`), options builder, answer key payload, points, time limits, and draft/published states.
     - `/admin/import`: CSV drag-and-drop uploader with pure client-side validation, formula-injection-safe error report download, built-in CSV template, duplicate policy selector, and job history.
-    - `/admin/users`: User management table with role assignment dialog and confirm protection.
+    - `/admin/users`: User management table with create user modal, edit user modal, role assignment, ban/unban with reason, delete user with safeguard protection.
     - `/admin/audit-log`: Append-only audit trail viewer showing actor, action labels, target entities, and change metadata chips.
+    - Direct top-bar "Admin Studio" entry button and mobile navigation drawer for admins and editors.
 
 - **Phase 6: Horizontal Navigation Sync, Gamification (XP & Level), Gems Economy, Daily Tasks & Check-in, Streak & Study Tracker, Leo Núi (Olympia Gameshow)**
   - **Chuẩn hóa Giao diện Điều hướng Ngang (Horizontal Header Navigation):**
@@ -78,17 +79,12 @@ Last updated: 2026-10-15
     - Cài đặt mục tiêu học tập (10/15/20/30 phút) và giờ nhắc nhở học tập hàng ngày.
   - **Đấu Trường Trực Tiếp (`/arena/room/:code`):**
     - Phòng đấu đối kháng thời gian thực với mã PIN chia sẻ, đếm ngược 3-2-1, câu hỏi tính tốc độ 15s, tính điểm người chơi trực tiếp, vinh danh bục chiến thắng.
-  - **Database Migration:** `014_gamification_and_gems.sql` bổ sung các cột `gems`, `streak_days`, `last_active_date`, `study_seconds_today`, `climb_high_score` vào `profiles` cùng 3 hàm RPC nguyên tử (`add_user_xp`, `modify_gems`, `claim_daily_checkin`).
+  - **Database Migration:** `014_gamification_and_gems.sql` and `015_user_ban.sql` bổ sung các cột `gems`, `streak_days`, `last_active_date`, `study_seconds_today`, `climb_high_score`, `is_banned`, `banned_at`, `ban_reason` vào `profiles` cùng các hàm RPC nguyên tử (`add_user_xp`, `modify_gems`, `claim_daily_checkin`, `admin_ban_user`, `admin_delete_user`, `admin_update_user`, `admin_create_user`).
   - **Verification:**
     - `npm run typecheck` (0 errors)
     - `npm run lint` (0 errors, 0 warnings)
-    - `npm test` (10 test suites, 55/55 unit tests passing)
-    - `npm run build` (production bundle built successfully in 4.4s)
-  - **Verification:**
-    - `npm run typecheck` (0 errors)
-    - `npm run lint` (0 errors, 0 warnings)
-    - `npm test` (18/18 tests passing across 4 test suites, including `adminImportService.test.ts`)
-    - `npm run build` (production build succeeded)
+    - `npm test` (11 test suites, 62/62 unit tests passing, bao gồm `adminUserService.test.ts`)
+    - `npm run build` (production bundle built successfully in 4.57s)
 
 ## 🔜 Next Up: Phase 4 — Realtime Arena & Battle Rank
 

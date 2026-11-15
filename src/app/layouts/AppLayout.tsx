@@ -19,6 +19,7 @@ import {
 import { useAuth } from '@/app/providers';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useGamificationStore } from '@/lib/gamification/gamificationStore';
 import { getLevelProgress } from '@/lib/gamification/xpSystem';
 import { GemsAndTasksModal } from '@/components/gamification/GemsAndTasksModal';
@@ -201,6 +202,16 @@ export function AppLayout() {
 
             <LanguageSwitcher />
 
+            {/* Admin Studio direct button for editors and admins */}
+            {isEditor && (
+              <Button asChild variant="gold" size="sm" className="hidden sm:inline-flex gap-1.5 h-8 text-xs font-bold shadow-sm">
+                <Link to="/admin">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  <span>Admin Studio</span>
+                </Link>
+              </Button>
+            )}
+
             {/* User Dropdown */}
             <div className="relative">
               <button
@@ -345,6 +356,22 @@ export function AppLayout() {
                 )}
               </Link>
             ))}
+
+            {isEditor && (
+              <Link
+                to="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-bold bg-amber-50 text-amber-900 border border-amber-200 transition-colors mt-2"
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldAlert className="h-4 w-4 text-amber-700" />
+                  <span>Admin Studio</span>
+                </div>
+                <Badge variant="gold" className="text-[10px]">
+                  QUẢN TRỊ
+                </Badge>
+              </Link>
+            )}
           </nav>
         </div>
       )}

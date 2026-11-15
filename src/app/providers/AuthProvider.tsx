@@ -2,6 +2,7 @@ import * as React from 'react';
 import { supabase } from '@/lib/supabase/client';
 import type { UserProfile, UserRole } from '@/types/auth';
 import type { Session, User } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -19,6 +20,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (!error && data) {
+        if (data.is_banned) {
+          await supabase.auth.signOut();
+          setProfile(null);
+          setAuthUser(null);
+          setSession(null);
+          toast.error(`Tài khoản đã bị cấm: ${data.ban_reason || 'Vi phạm chính sách cộng đồng'}`);
+          return;
+        }
+
         setProfile({
           id: data.id,
           email: user.email ?? '',
@@ -36,6 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: (data.role as UserRole) || 'learner',
           xp: data.xp || 0,
           level: data.level || 1,
+          gems: data.gems ?? 50,
+          streakDays: data.streak_days ?? 1,
+          isBanned: data.is_banned,
+          banReason: data.ban_reason,
           createdAt: data.created_at || new Date().toISOString(),
           updatedAt: data.updated_at || new Date().toISOString(),
         });
