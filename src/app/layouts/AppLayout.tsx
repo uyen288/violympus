@@ -1,71 +1,101 @@
 import * as React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router';
-import { useTranslation } from 'react-i18next';
 import {
   Swords,
-  LayoutDashboard,
   BookOpen,
   Trophy,
-  Award,
+  Mountain,
+  Timer,
   User,
   Settings,
   ShieldAlert,
   LogOut,
   Menu,
   X,
+  Flame,
+  Zap,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '@/app/providers';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useGamificationStore } from '@/lib/gamification/gamificationStore';
+import { getLevelProgress } from '@/lib/gamification/xpSystem';
+import { GemsAndTasksModal } from '@/components/gamification/GemsAndTasksModal';
+import { StreakAndStatsModal } from '@/components/gamification/StreakAndStatsModal';
 import { cn } from '@/lib/utils/cn';
 
 export function AppLayout() {
-  const { t } = useTranslation();
   const { user, isEditor, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [userMenuOpen, setUserMenuOpen] = React.useState(false);
+  const [isGemsModalOpen, setIsGemsModalOpen] = React.useState(false);
+  const [isStreakModalOpen, setIsStreakModalOpen] = React.useState(false);
+  const [streakModalTab, setStreakModalTab] = React.useState<'streak' | 'stats' | 'reminder'>('streak');
 
+  const {
+    gems,
+    xp,
+    streak,
+    initToday,
+    syncFromProfile,
+  } = useGamificationStore();
 
-  const navItems = [
-    {
-      to: '/dashboard',
-      icon: LayoutDashboard,
-      label: t('navigation.dashboard', 'Tổng quan'),
-      exact: true,
-    },
+  React.useEffect(() => {
+    initToday();
+  }, [initToday]);
+
+  React.useEffect(() => {
+    if (user) {
+      syncFromProfile(user);
+    }
+  }, [user, syncFromProfile]);
+
+  const levelInfo = getLevelProgress(xp);
+
+  // Close menus on route change during render
+  const [prevPath, setPrevPath] = React.useState(location.pathname);
+  if (location.pathname !== prevPath) {
+    setPrevPath(location.pathname);
+    setMobileMenuOpen(false);
+    setUserMenuOpen(false);
+  }
+
+  const navTabs = [
     {
       to: '/practice',
+      label: 'Học & Luyện tập',
       icon: BookOpen,
-      label: t('navigation.practice', 'Luyện tập'),
+      isActive: location.pathname.startsWith('/practice'),
+    },
+    {
+      to: '/exams',
+      label: 'Thi & Khảo sát',
+      icon: Timer,
+      isActive: location.pathname.startsWith('/exams'),
     },
     {
       to: '/arena',
+      label: 'Đấu trường',
       icon: Swords,
-      label: t('navigation.arena', 'Đấu trường'),
+      badge: 'Live',
+      isActive: location.pathname.startsWith('/arena'),
+    },
+    {
+      to: '/climb',
+      label: 'Leo núi',
+      icon: Mountain,
+      badge: 'Olympia',
+      isActive: location.pathname.startsWith('/climb'),
     },
     {
       to: '/leaderboard',
+      label: 'Bảng xếp hạng',
       icon: Trophy,
-      label: t('navigation.leaderboard', 'Bảng xếp hạng'),
-    },
-    {
-      to: '/tournaments',
-      icon: Award,
-      label: t('navigation.tournaments', 'Giải đấu'),
-      badge: 'Sắp có',
-      disabled: true,
-    },
-    {
-      to: '/profile',
-      icon: User,
-      label: t('navigation.profile', 'Hồ sơ cá nhân'),
-    },
-    {
-      to: '/settings',
-      icon: Settings,
-      label: t('navigation.settings', 'Cài đặt'),
+      isActive: location.pathname.startsWith('/leaderboard'),
     },
   ];
 
@@ -75,322 +105,266 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <a href="#app-content" className="skip-link">
         Bỏ qua tới nội dung chính
       </a>
 
-      {/* Desktop Sidebar (>= lg) */}
-      <aside
-        className="hidden lg:flex w-64 flex-col border-r border-border bg-surface shrink-0 fixed inset-y-0 left-0 z-30"
-        aria-label="Thanh điều hướng ứng dụng"
-      >
-        {/* Brand */}
-        <div className="h-16 flex items-center px-6 border-b border-border">
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-2.5 font-bold text-lg text-primary"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white shadow-xs">
-              <Swords className="h-4 w-4" aria-hidden="true" />
-            </div>
-            <span className="font-heading font-extrabold text-xl tracking-tight text-foreground">
-              VI<span className="text-primary">OLYMPUS</span>
-            </span>
-          </Link>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-          {navItems.map((item) => {
-            const isActive = item.exact
-              ? location.pathname === item.to
-              : location.pathname.startsWith(item.to);
-
-            if (item.disabled) {
-              return (
-                <div
-                  key={item.to}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium text-foreground-muted/60 opacity-60 cursor-not-allowed select-none"
-                  aria-disabled="true"
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon className="h-5 w-5" aria-hidden="true" />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span className="text-[10px] font-semibold bg-surface-muted px-2 py-0.5 rounded-full text-foreground-muted">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-              );
-            }
-
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  'flex items-center justify-between px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary-soft text-primary font-semibold'
-                    : 'text-foreground-muted hover:bg-surface-muted hover:text-foreground',
-                )}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon
-                    className={cn('h-5 w-5', isActive ? 'text-primary' : 'text-foreground-muted')}
-                    aria-hidden="true"
-                  />
-                  <span>{item.label}</span>
-                </div>
-              </Link>
-            );
-          })}
-
-          {/* Admin Studio Link (Editor/Admin only) */}
-          {isEditor && (
-            <div className="pt-4 mt-4 border-t border-border">
-              <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-foreground-muted/80">
-                Quản trị viên
+      {/* Top Horizontal Navigation Bar */}
+      <header className="sticky top-0 z-40 h-16 w-full border-b border-border bg-surface/95 backdrop-blur-md">
+        <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* Left: Brand Logo (Home) */}
+          <div className="flex items-center gap-6 lg:gap-8">
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-primary transition-opacity hover:opacity-90 shrink-0"
+              aria-label="Violympus Trang chủ"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
+                <Swords className="h-5 w-5" aria-hidden="true" />
               </div>
-              <Link
-                to="/admin"
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors',
-                  location.pathname.startsWith('/admin')
-                    ? 'bg-amber-100 text-amber-900 font-semibold'
-                    : 'text-amber-800 hover:bg-amber-50',
-                )}
-              >
-                <ShieldAlert className="h-5 w-5 text-amber-700" aria-hidden="true" />
-                <span>Admin Studio</span>
-              </Link>
-            </div>
-          )}
-        </nav>
-
-        {/* User Card & Logout */}
-        <div className="p-4 border-t border-border bg-surface-muted/40">
-          <div className="flex items-center justify-between">
-            <Link to="/profile" className="flex items-center gap-3 overflow-hidden group">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary font-bold text-sm overflow-hidden border border-border">
-                {user?.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.displayName}
-                    className="h-full w-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  user?.displayName?.[0]?.toUpperCase() || 'U'
-                )}
-              </div>
-              <div className="overflow-hidden text-left">
-                <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
-                  {user?.displayName || 'Người dùng'}
-                </p>
-                <p className="text-[11px] text-foreground-muted flex items-center gap-1.5">
-                  <span className="font-mono tabular-nums font-bold text-accent-gold">
-                    {user?.xp || 0} XP
-                  </span>
-                  <span>• Lv.{user?.level || 1}</span>
-                </p>
-              </div>
+              <span className="font-heading font-extrabold text-2xl tracking-tighter text-foreground">
+                VI<span className="text-primary">OLYMPUS</span>
+              </span>
             </Link>
 
+            {/* Center: Horizontal Tabs (Desktop >= md/lg) */}
+            <nav className="hidden md:flex items-center gap-1 text-sm font-medium" aria-label="Điều hướng chính">
+              {navTabs.map((tab) => (
+                <Link
+                  key={tab.to}
+                  to={tab.to}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors relative',
+                    tab.isActive
+                      ? 'bg-primary-soft text-primary font-bold shadow-2xs'
+                      : 'text-foreground-muted hover:bg-surface-muted hover:text-foreground'
+                  )}
+                >
+                  <tab.icon className={cn('h-4 w-4 shrink-0', tab.isActive ? 'text-primary' : 'text-foreground-muted')} />
+                  <span>{tab.label}</span>
+                  {tab.badge && (
+                    <span
+                      className={cn(
+                        'text-[9px] px-1.5 py-0.2 rounded-full font-bold',
+                        tab.badge === 'Live' ? 'bg-amber-100 text-amber-800' : 'bg-primary text-white'
+                      )}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* Right: Gamification Widgets & User Menu */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Streak Widget Button */}
             <button
-              onClick={handleLogout}
-              className="p-1.5 rounded-[var(--radius-sm)] text-foreground-muted hover:text-danger hover:bg-danger-soft transition-colors"
-              title="Đăng xuất"
-              aria-label="Đăng xuất"
+              type="button"
+              onClick={() => {
+                setStreakModalTab('streak');
+                setIsStreakModalOpen(true);
+              }}
+              title="Chuỗi ngày học liên tiếp"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-300/60 bg-amber-50/70 hover:bg-amber-100/70 text-amber-800 text-xs font-bold transition-colors cursor-pointer"
             >
-              <LogOut className="h-4 w-4" />
+              <Flame className="h-4 w-4 text-amber-500 fill-amber-500 shrink-0" />
+              <span>{streak}</span>
+            </button>
+
+            {/* Gems Balance Button */}
+            <button
+              type="button"
+              onClick={() => setIsGemsModalOpen(true)}
+              title="Kho kim cương & Nhiệm vụ"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-primary/20 bg-primary-soft/60 hover:bg-primary-soft text-primary text-xs font-bold transition-colors cursor-pointer"
+            >
+              <span className="text-sm">💎</span>
+              <span className="font-mono">{gems}</span>
+            </button>
+
+            {/* Level & XP Badge Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setStreakModalTab('stats');
+                setIsStreakModalOpen(true);
+              }}
+              title={`Cấp ${levelInfo.currentLevel} • ${xp} XP`}
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-surface hover:bg-surface-muted text-xs font-semibold text-foreground transition-colors cursor-pointer"
+            >
+              <Zap className="h-3.5 w-3.5 text-accent-gold fill-accent-gold" />
+              <span>Lv.{levelInfo.currentLevel}</span>
+            </button>
+
+            <LanguageSwitcher />
+
+            {/* User Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((prev) => !prev)}
+                className="flex items-center gap-1.5 p-1 rounded-full hover:bg-surface-muted transition-colors cursor-pointer"
+                aria-expanded={userMenuOpen}
+                aria-label="Menu tài khoản"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary font-bold text-xs overflow-hidden border border-border">
+                  {user?.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.displayName}
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    user?.displayName?.[0]?.toUpperCase() || 'U'
+                  )}
+                </div>
+                <ChevronDown className="h-3.5 w-3.5 text-foreground-muted hidden sm:block" />
+              </button>
+
+              {userMenuOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-surface p-1.5 shadow-lg space-y-1 animate-in fade-in zoom-in-95 z-50 text-foreground"
+                  role="menu"
+                >
+                  <div className="px-3 py-2 border-b border-border/80">
+                    <p className="text-xs font-bold text-foreground truncate">{user?.displayName}</p>
+                    <p className="text-[11px] text-foreground-muted truncate font-mono">{user?.email}</p>
+                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-amber-700 font-bold">
+                      <span>Cấp {levelInfo.currentLevel} ({levelInfo.title})</span>
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium hover:bg-surface-muted transition-colors"
+                  >
+                    <User className="h-4 w-4 text-foreground-muted" />
+                    <span>Hồ sơ cá nhân</span>
+                  </Link>
+
+                  <Link
+                    to="/settings"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium hover:bg-surface-muted transition-colors"
+                  >
+                    <Settings className="h-4 w-4 text-foreground-muted" />
+                    <span>Cài đặt</span>
+                  </Link>
+
+                  {isEditor && (
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-amber-800 hover:bg-amber-50 transition-colors"
+                    >
+                      <ShieldAlert className="h-4 w-4 text-amber-600" />
+                      <span>Admin Studio</span>
+                    </Link>
+                  )}
+
+                  <div className="border-t border-border pt-1">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-semibold text-danger hover:bg-danger-soft transition-colors cursor-pointer text-left"
+                    >
+                      <LogOut className="h-4 w-4 text-danger" />
+                      <span>Đăng xuất</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Hamburger Toggle */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className="md:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground hover:bg-surface-muted cursor-pointer"
+              aria-label="Mở menu"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
-      </aside>
+      </header>
 
-      {/* Main Container */}
-      <div className="flex-1 flex flex-col lg:pl-64 min-w-0">
-        {/* Mobile Header (< lg) */}
-        <header className="lg:hidden sticky top-0 z-30 h-14 w-full border-b border-border bg-surface px-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Mở menu điều hướng"
+      {/* Mobile Slide-down Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-b border-border bg-surface p-4 space-y-3 animate-in slide-in-from-top-2">
+          {/* Mobile Streak & Gems bar */}
+          <div className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-surface-muted/40">
+            <button
+              type="button"
+              onClick={() => {
+                setStreakModalTab('streak');
+                setIsStreakModalOpen(true);
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center gap-1.5 text-xs font-bold text-amber-800"
             >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <Link to="/dashboard" className="font-heading font-bold text-lg text-primary">
-              VIOLYMPUS
-            </Link>
-          </div>
+              <Flame className="h-4 w-4 text-amber-500 fill-amber-500" />
+              <span>Chuỗi {streak} ngày</span>
+            </button>
 
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            <Link
-              to="/profile"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-primary font-bold text-xs overflow-hidden border border-border"
-              aria-label="Xem hồ sơ"
+            <button
+              type="button"
+              onClick={() => {
+                setIsGemsModalOpen(true);
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center gap-1.5 text-xs font-bold text-primary"
             >
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={user.displayName}
-                  className="h-full w-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                user?.displayName?.[0]?.toUpperCase() || 'U'
-              )}
-            </Link>
+              <span>💎 {gems} Kim cương</span>
+            </button>
           </div>
-        </header>
 
-        {/* Mobile Slide-Out Drawer */}
-        {mobileMenuOpen && (
-          <div
-            className="lg:hidden fixed inset-0 z-50 flex"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu di động"
-          >
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-
-            {/* Drawer Content */}
-            <div className="relative flex-1 w-full max-w-xs bg-surface p-5 flex flex-col justify-between shadow-xl">
-              <div>
-                <div className="flex items-center justify-between pb-4 border-b border-border">
-                  <div className="flex items-center gap-2 font-bold text-primary">
-                    <Swords className="h-5 w-5" />
-                    <span className="font-heading text-lg">VIOLYMPUS</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setMobileMenuOpen(false)}
-                    aria-label="Đóng menu"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
-
-                <nav className="mt-4 space-y-1">
-                  {navItems.map((item) => {
-                    const isActive = item.exact
-                      ? location.pathname === item.to
-                      : location.pathname.startsWith(item.to);
-
-                    if (item.disabled) {
-                      return (
-                        <div
-                          key={item.to}
-                          className="flex items-center justify-between px-3 py-2.5 rounded-[var(--radius-md)] text-sm text-foreground-muted/60"
-                        >
-                          <div className="flex items-center gap-3">
-                            <item.icon className="h-5 w-5" />
-                            <span>{item.label}</span>
-                          </div>
-                          <Badge variant="outline" className="text-[10px]">
-                            {item.badge}
-                          </Badge>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors',
-                          isActive
-                            ? 'bg-primary-soft text-primary font-semibold'
-                            : 'text-foreground-muted hover:bg-surface-muted',
-                        )}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-
-                  {isEditor && (
-                    <div className="pt-3 mt-3 border-t border-border">
-                      <Link
-                        to="/admin"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium text-amber-900 bg-amber-50"
-                      >
-                        <ShieldAlert className="h-5 w-5 text-amber-700" />
-                        <span>Admin Studio</span>
-                      </Link>
-                    </div>
-                  )}
-                </nav>
-              </div>
-
-              <div className="pt-4 border-t border-border">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="w-full justify-center gap-2 text-danger hover:bg-danger-soft"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Đăng xuất</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Main Content Area */}
-        <main id="app-content" className="flex-1 pb-16 lg:pb-0">
-          <Outlet />
-        </main>
-
-        {/* Mobile Bottom Navigation (< lg) */}
-        <nav
-          className="lg:hidden fixed bottom-0 left-0 right-0 z-30 h-16 border-t border-border bg-surface flex items-center justify-around px-2 shadow-sm"
-          aria-label="Điều hướng nhanh di động"
-        >
-          {[
-            { to: '/dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
-            { to: '/practice', icon: BookOpen, label: 'Luyện tập' },
-            { to: '/arena', icon: Swords, label: 'Đấu trường' },
-            { to: '/profile', icon: User, label: 'Hồ sơ' },
-          ].map((item) => {
-            const isActive = location.pathname.startsWith(item.to);
-            return (
+          <nav className="space-y-1">
+            {navTabs.map((tab) => (
               <Link
-                key={item.to}
-                to={item.to}
+                key={tab.to}
+                to={tab.to}
+                onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  'flex flex-col items-center justify-center py-1 px-3 rounded-lg text-xs font-medium transition-colors',
-                  isActive
-                    ? 'text-primary font-bold'
-                    : 'text-foreground-muted hover:text-foreground',
+                  'flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold transition-colors',
+                  tab.isActive
+                    ? 'bg-primary-soft text-primary font-bold'
+                    : 'text-foreground-muted hover:bg-surface-muted hover:text-foreground'
                 )}
-                aria-current={isActive ? 'page' : undefined}
               >
-                <item.icon className="h-5 w-5 mb-0.5" aria-hidden="true" />
-                <span className="text-[11px]">{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <tab.icon className="h-4 w-4" />
+                  <span>{tab.label}</span>
+                </div>
+                {tab.badge && (
+                  <Badge variant={tab.badge === 'Live' ? 'gold' : 'default'} className="text-[10px]">
+                    {tab.badge}
+                  </Badge>
+                )}
               </Link>
-            );
-          })}
-        </nav>
-      </div>
+            ))}
+          </nav>
+        </div>
+      )}
+
+      {/* Main Content (Horizontal, full-width with clean max-w-7xl) */}
+      <main id="app-content" className="flex-1 w-full">
+        <Outlet />
+      </main>
+
+      {/* Gamification Modals */}
+      <GemsAndTasksModal
+        isOpen={isGemsModalOpen}
+        onClose={() => setIsGemsModalOpen(false)}
+      />
+
+      <StreakAndStatsModal
+        isOpen={isStreakModalOpen}
+        onClose={() => setIsStreakModalOpen(false)}
+        defaultTab={streakModalTab}
+      />
     </div>
   );
 }

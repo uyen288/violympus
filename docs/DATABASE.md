@@ -115,6 +115,22 @@ Rationale: Exam and match results are part of the platform's data integrity. Ano
 - Questions referenced by exam_questions or attempt_answers: **archive** instead of hard delete
 - Draft content with no references: hard delete allowed
 
+## Gamification & Gems Economy (`014_gamification_and_gems.sql`)
+
+### Profile Gamification Columns
+
+- `gems`: integer NOT NULL DEFAULT 50 CHECK (gems >= 0) — In-app currency for arena matches and climb challenges.
+- `streak_days`: integer NOT NULL DEFAULT 1 CHECK (streak_days >= 0) — Consecutive active study days.
+- `last_active_date`: date DEFAULT CURRENT_DATE — For tracking daily streaks and check-ins.
+- `study_seconds_today`: integer NOT NULL DEFAULT 0 — Accumulated study time for the day.
+- `climb_high_score`: integer NOT NULL DEFAULT 0 — Highest score achieved in the Olympia climb mode.
+
+### Atomic RPC Functions
+
+- `public.add_user_xp(p_amount integer, p_reason text, p_source_type text, p_source_id uuid)`: Awards XP, calculates level atomically (`floor(sqrt(xp / 100)) + 1`), records transaction in `xp_transactions`.
+- `public.modify_gems(p_amount integer, p_reason text)`: Modifies gems (positive to award, negative to spend) with strict non-negative check (`gems + p_amount >= 0`).
+- `public.claim_daily_checkin()`: Atomic check-in handler ensuring only one claim per calendar day, advancing 7-day streak rewards.
+
 ## Generated Types
 
 TypeScript types generated from schema into `src/lib/supabase/database.types.ts`.

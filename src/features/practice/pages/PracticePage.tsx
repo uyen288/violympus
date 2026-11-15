@@ -27,6 +27,9 @@ import { MultiSelectMasterGame } from '../components/MultiSelectMasterGame';
 import { SubjectFilterSelector } from '../components/SubjectFilterSelector';
 import { SUBJECT_METAS } from '../data/practiceBank';
 
+import { useStudyTracker } from '@/hooks/useStudyTracker';
+import { useGamificationStore } from '@/lib/gamification/gamificationStore';
+
 type ActiveGameMode =
   | 'none'
   | 'matching'
@@ -38,10 +41,20 @@ type ActiveGameMode =
   | 'multi_select';
 
 export function PracticePage() {
+  useStudyTracker(true);
+  const { awardXP, addGems, incrementTaskProgress } = useGamificationStore();
+
   const [activeGame, setActiveGame] = useState<ActiveGameMode>('none');
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>(() =>
     SUBJECT_METAS.map((s) => s.slug)
   );
+
+  const handleFinishGame = () => {
+    setActiveGame('none');
+    awardXP(20, 'Luyện tập trò chơi học tập');
+    addGems(5, 'Thưởng hoàn thành luyện tập');
+    incrementTaskProgress('complete_quiz', 1);
+  };
 
   // If a game is active, render its screen
   if (activeGame === 'matching') {
@@ -49,7 +62,7 @@ export function PracticePage() {
       <MatchingGame
         key={selectedSubjects.join(',')}
         selectedSubjectSlugs={selectedSubjects}
-        onBack={() => setActiveGame('none')}
+        onBack={handleFinishGame}
         onChangeSubjects={() => setActiveGame('none')}
       />
     );
@@ -60,7 +73,7 @@ export function PracticePage() {
       <ClimbingObstacleGame
         key={selectedSubjects.join(',')}
         selectedSubjectSlugs={selectedSubjects}
-        onBack={() => setActiveGame('none')}
+        onBack={handleFinishGame}
         onChangeSubjects={() => setActiveGame('none')}
       />
     );
@@ -71,7 +84,7 @@ export function PracticePage() {
       <SpeedBlankGame
         key={selectedSubjects.join(',')}
         selectedSubjectSlugs={selectedSubjects}
-        onBack={() => setActiveGame('none')}
+        onBack={handleFinishGame}
         onChangeSubjects={() => setActiveGame('none')}
       />
     );
@@ -82,7 +95,7 @@ export function PracticePage() {
       <ZodiacGame
         key={selectedSubjects.join(',')}
         selectedSubjectSlugs={selectedSubjects}
-        onBack={() => setActiveGame('none')}
+        onBack={handleFinishGame}
         onChangeSubjects={() => setActiveGame('none')}
       />
     );
@@ -93,7 +106,7 @@ export function PracticePage() {
       <LightningTrueFalseGame
         key={selectedSubjects.join(',')}
         selectedSubjectSlugs={selectedSubjects}
-        onBack={() => setActiveGame('none')}
+        onBack={handleFinishGame}
         onChangeSubjects={() => setActiveGame('none')}
       />
     );
@@ -104,7 +117,7 @@ export function PracticePage() {
       <SurvivalRushGame
         key={selectedSubjects.join(',')}
         selectedSubjectSlugs={selectedSubjects}
-        onBack={() => setActiveGame('none')}
+        onBack={handleFinishGame}
         onChangeSubjects={() => setActiveGame('none')}
       />
     );
@@ -115,7 +128,7 @@ export function PracticePage() {
       <MultiSelectMasterGame
         key={selectedSubjects.join(',')}
         selectedSubjectSlugs={selectedSubjects}
-        onBack={() => setActiveGame('none')}
+        onBack={handleFinishGame}
         onChangeSubjects={() => setActiveGame('none')}
       />
     );

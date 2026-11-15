@@ -52,6 +52,38 @@ Last updated: 2026-10-15
     - `/admin/import`: CSV drag-and-drop uploader with pure client-side validation, formula-injection-safe error report download, built-in CSV template, duplicate policy selector, and job history.
     - `/admin/users`: User management table with role assignment dialog and confirm protection.
     - `/admin/audit-log`: Append-only audit trail viewer showing actor, action labels, target entities, and change metadata chips.
+
+- **Phase 6: Horizontal Navigation Sync, Gamification (XP & Level), Gems Economy, Daily Tasks & Check-in, Streak & Study Tracker, Leo Núi (Olympia Gameshow)**
+  - **Chuẩn hóa Giao diện Điều hướng Ngang (Horizontal Header Navigation):**
+    - Header trên đỉnh đồng nhất giữa `PublicLayout` và `AppLayout`: Home (Logo giữ nguyên), Học & Luyện tập (`/practice`), Thi & Khảo sát (`/exams`), Đấu trường (`/arena`), Leo núi (`/climb`), Bảng xếp hạng (`/leaderboard`).
+    - Khối tiện ích góc phải: Chuỗi Streak (🔥), Ngân khố Kim cương (💎), Cấp độ & Thanh tiến trình (⚡), Bộ chọn ngôn ngữ (VI/EN), Menu hồ sơ/cài đặt/đăng xuất (Auth) hoặc Đăng nhập/Đăng ký (Khách).
+  - **Chức năng LEO NÚI — Đường Lên Đỉnh Olympia (`/climb`):**
+    - 4 vòng thi gameshow chuẩn mực:
+      - 1. *Khởi động:* Trả lời nhanh trong 60 giây, mỗi câu đúng +10đ.
+      - 2. *Vượt chướng ngại vật:* Ô chữ 4 hàng ngang gợi ý từ khóa bí mật, tính năng bấm chuông đoán từ khóa sớm nhận tới +60đ.
+      - 3. *Tăng tốc:* 4 câu hỏi tốc độ, chia bậc điểm 40/30/20/10 theo thời gian trả lời.
+      - 4. *Về đích:* Chọn gói câu hỏi (40đ hoặc 60đ) kèm quyền chọn Ngôi sao hy vọng (⭐) nhân đôi điểm đúng hoặc phạt nếu sai.
+    - Hỗ trợ cả 2 chế độ: Thử thách Đơn (Solo) và Đấu trường 4 người (Multiplayer / AI Contestants).
+    - Lễ trao vòng nguyệt quế và bục vinh danh Podium, phân phối thưởng XP và Kim Cương.
+  - **Hệ thống Điểm Kinh Nghiệm (XP) & Cấp Độ:**
+    - 8 cấp bậc danh hiệu: Tập sự, Học giả, Chiến binh tri thức, Dũng sĩ Olympia, Bậc thầy, Đại kiện tướng, Huyền thoại, Đỉnh Olympus.
+    - Thanh tiến trình Level, số XP còn thiếu để thăng cấp, tự động đồng bộ profile.
+  - **Kinh tế Kim Cương (Gems) & Nhiệm vụ Hàng ngày:**
+    - Người dùng khởi đầu với 50 💎, tiêu thụ 10 💎 tạo phòng đấu, 5 💎 vào phòng đấu, 10 💎 vé thi leo núi 4 người.
+    - Điểm danh 7 ngày nhận kim cương (+10 💎 -> +50 💎) với lịch trực quan.
+    - 4 nhiệm vụ hàng ngày: Khởi động ngày mới, Luyện tập 5 phút, Hoàn thành 1 bài thi/quiz, Tham gia Đấu trường/Leo núi.
+  - **Chuỗi Ngày Học (Streak), Thống kê & Nhắc nhở:**
+    - Chuỗi ngày học liên tục (Streak 🔥) với lịch tuần.
+    - Tự động ghi nhận thời gian học tích cực (`useStudyTracker`), thống kê thời gian học hôm nay, độ chính xác, tổng XP.
+    - Cài đặt mục tiêu học tập (10/15/20/30 phút) và giờ nhắc nhở học tập hàng ngày.
+  - **Đấu Trường Trực Tiếp (`/arena/room/:code`):**
+    - Phòng đấu đối kháng thời gian thực với mã PIN chia sẻ, đếm ngược 3-2-1, câu hỏi tính tốc độ 15s, tính điểm người chơi trực tiếp, vinh danh bục chiến thắng.
+  - **Database Migration:** `014_gamification_and_gems.sql` bổ sung các cột `gems`, `streak_days`, `last_active_date`, `study_seconds_today`, `climb_high_score` vào `profiles` cùng 3 hàm RPC nguyên tử (`add_user_xp`, `modify_gems`, `claim_daily_checkin`).
+  - **Verification:**
+    - `npm run typecheck` (0 errors)
+    - `npm run lint` (0 errors, 0 warnings)
+    - `npm test` (10 test suites, 55/55 unit tests passing)
+    - `npm run build` (production bundle built successfully in 4.4s)
   - **Verification:**
     - `npm run typecheck` (0 errors)
     - `npm run lint` (0 errors, 0 warnings)

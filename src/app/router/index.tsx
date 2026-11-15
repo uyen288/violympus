@@ -24,7 +24,8 @@ import {
 // App Pages (RequireAuth)
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { PracticePage } from '@/features/practice';
-import { ArenaLobbyPage } from '@/features/arena/pages/ArenaLobbyPage';
+import { ArenaLobbyPage, ArenaBattlePage } from '@/features/arena';
+import { ClimbPage } from '@/features/climb';
 import { ProfilePage } from '@/features/profile';
 import { SettingsPage } from '@/features/settings/pages/SettingsPage';
 
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
       { path: 'subjects', element: <SubjectsPage /> },
       { path: 'practice', element: <PracticePage /> },
       { path: 'exams', element: <ExamsListPage /> },
+      { path: 'climb', element: <ClimbPage /> },
       { path: 'leaderboard', element: <LeaderboardPage /> },
       { path: 'terms', element: <TermsPage /> },
       { path: 'privacy', element: <PrivacyPage /> },
@@ -101,7 +103,11 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: 'dashboard', element: <DashboardPage /> },
+      { path: 'practice', element: <PracticePage /> },
+      { path: 'exams', element: <ExamsListPage /> },
       { path: 'arena', element: <ArenaLobbyPage /> },
+      { path: 'climb', element: <ClimbPage /> },
+      { path: 'leaderboard', element: <LeaderboardPage /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
@@ -131,7 +137,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <ArenaLobbyPage />,
+        element: <ArenaBattlePage />,
       },
     ],
   },

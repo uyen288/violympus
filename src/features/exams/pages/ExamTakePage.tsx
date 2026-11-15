@@ -9,6 +9,9 @@ import { examService, type ExamGradingResult } from '../services/examService';
 import { QuestionCard } from '../components/QuestionCard';
 import { ExamResultView } from '../components/ExamResultView';
 
+import { useStudyTracker } from '@/hooks/useStudyTracker';
+import { useGamificationStore } from '@/lib/gamification/gamificationStore';
+
 export function ExamTakePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -19,6 +22,9 @@ export function ExamTakePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<ExamGradingResult | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  useStudyTracker(!result);
+  const { awardXP, addGems, incrementTaskProgress } = useGamificationStore();
 
   const { data: exam, isLoading, error } = useQuery({
     queryKey: ['exam-take', id],
@@ -36,14 +42,20 @@ export function ExamTakePage() {
     try {
       const gradingResult = await examService.gradeGuestExam(id, answers);
       setResult(gradingResult);
+      awardXP(Math.max(50, gradingResult.score), 'Hoàn thành đề thi thử');
+      addGems(15, 'Thưởng hoàn thành đề thi');
+      incrementTaskProgress('complete_quiz', 1);
     } catch {
       // Local fallback in case of network issue
       const fallback = await examService.gradeGuestExam(id, answers);
       setResult(fallback);
+      awardXP(50, 'Hoàn thành đề thi thử');
+      addGems(15, 'Thưởng hoàn thành đề thi');
+      incrementTaskProgress('complete_quiz', 1);
     } finally {
       setIsSubmitting(false);
     }
-  }, [id, answers, isSubmitting]);
+  }, [id, answers, isSubmitting, awardXP, addGems, incrementTaskProgress]);
 
   // Countdown timer based on target deadline
   useEffect(() => {

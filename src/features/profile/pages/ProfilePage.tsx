@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Mail,
-  Shield,
   Zap,
   Trophy,
   User,
@@ -15,8 +14,11 @@ import {
   Save,
   CheckCircle2,
   ExternalLink,
+  Flame,
 } from 'lucide-react';
 import { useAuth } from '@/app/providers';
+import { useGamificationStore } from '@/lib/gamification/gamificationStore';
+import { getLevelProgress } from '@/lib/gamification/xpSystem';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +55,8 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 export function ProfilePage() {
   const { user, authUser, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const { gems, streak, xp: storeXp } = useGamificationStore();
+  const levelInfo = getLevelProgress(user?.xp || storeXp || 0);
 
   // State for delete account modal
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
@@ -241,30 +245,56 @@ export function ProfilePage() {
           </div>
         </CardHeader>
 
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-border bg-surface-muted/30 p-4 text-center">
+        <CardContent className="pt-6 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="rounded-xl border border-border bg-surface-muted/30 p-3 sm:p-4 text-center">
               <div className="flex justify-center mb-1 text-accent-gold">
-                <Zap className="h-5 w-5" />
+                <Zap className="h-5 w-5 fill-accent-gold" />
               </div>
-              <div className="font-heading text-2xl font-black tabular-nums">{user?.xp || 0}</div>
+              <div className="font-heading text-xl sm:text-2xl font-black tabular-nums">{levelInfo.currentXP}</div>
               <div className="text-xs text-foreground-muted">Tổng điểm XP</div>
             </div>
 
-            <div className="rounded-xl border border-border bg-surface-muted/30 p-4 text-center">
+            <div className="rounded-xl border border-border bg-surface-muted/30 p-3 sm:p-4 text-center">
               <div className="flex justify-center mb-1 text-primary">
                 <Trophy className="h-5 w-5" />
               </div>
-              <div className="font-heading text-2xl font-black tabular-nums">Cấp {user?.level || 1}</div>
-              <div className="text-xs text-foreground-muted">Cấp độ danh dự</div>
+              <div className="font-heading text-xl sm:text-2xl font-black tabular-nums">Cấp {levelInfo.currentLevel}</div>
+              <div className="text-xs text-foreground-muted">{levelInfo.title}</div>
             </div>
 
-            <div className="rounded-xl border border-border bg-surface-muted/30 p-4 text-center">
-              <div className="flex justify-center mb-1 text-emerald-600">
-                <Shield className="h-5 w-5" />
+            <div className="rounded-xl border border-border bg-surface-muted/30 p-3 sm:p-4 text-center">
+              <div className="flex justify-center mb-1 text-primary text-xl">
+                💎
               </div>
-              <div className="font-heading text-base font-bold capitalize mt-1">{user?.role || 'Learner'}</div>
-              <div className="text-xs text-foreground-muted">Phân quyền hệ thống</div>
+              <div className="font-heading text-xl sm:text-2xl font-black text-primary tabular-nums">{gems}</div>
+              <div className="text-xs text-foreground-muted">Kim cương</div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-surface-muted/30 p-3 sm:p-4 text-center">
+              <div className="flex justify-center mb-1 text-amber-500">
+                <Flame className="h-5 w-5 fill-amber-500" />
+              </div>
+              <div className="font-heading text-xl sm:text-2xl font-black text-amber-600 tabular-nums">{streak} ngày</div>
+              <div className="text-xs text-foreground-muted">Chuỗi học tập</div>
+            </div>
+          </div>
+
+          {/* Level Progress */}
+          <div className="rounded-xl border border-border p-3.5 bg-surface space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">
+                Tiến độ thăng cấp ({levelInfo.percentage}%)
+              </span>
+              <span className="text-foreground-muted font-mono">
+                {levelInfo.currentXP} / {levelInfo.maxXP} XP (Cần thêm {levelInfo.xpNeeded} XP lên Cấp {levelInfo.nextLevel})
+              </span>
+            </div>
+            <div className="h-2 w-full bg-surface-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-accent-gold transition-all"
+                style={{ width: `${levelInfo.percentage}%` }}
+              />
             </div>
           </div>
         </CardContent>

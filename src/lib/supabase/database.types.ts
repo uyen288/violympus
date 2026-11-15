@@ -32,6 +32,11 @@ export interface Database {
           role: UserRole;
           xp: number;
           level: number;
+          gems: number;
+          streak_days: number;
+          last_active_date: string | null;
+          study_seconds_today: number;
+          climb_high_score: number;
           is_public: boolean;
           created_at: string;
           updated_at: string;
@@ -45,6 +50,11 @@ export interface Database {
           role?: UserRole;
           xp?: number;
           level?: number;
+          gems?: number;
+          streak_days?: number;
+          last_active_date?: string | null;
+          study_seconds_today?: number;
+          climb_high_score?: number;
           is_public?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -58,6 +68,11 @@ export interface Database {
           role?: UserRole;
           xp?: number;
           level?: number;
+          gems?: number;
+          streak_days?: number;
+          last_active_date?: string | null;
+          study_seconds_today?: number;
+          climb_high_score?: number;
           is_public?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -890,6 +905,39 @@ export interface Database {
             explanation: string;
             official_answer: Json;
           }>;
+        };
+      };
+      add_user_xp: {
+        Args: {
+          p_amount: number;
+          p_reason: string;
+          p_source_type?: string;
+          p_source_id?: string | null;
+        };
+        Returns: {
+          xp: number;
+          level: number;
+          leveled_up: boolean;
+        };
+      };
+      modify_gems: {
+        Args: {
+          p_amount: number;
+          p_reason: string;
+        };
+        Returns: {
+          gems: number;
+          amount: number;
+          reason: string;
+        };
+      };
+      claim_daily_checkin: {
+        Args: Record<string, never>;
+        Returns: {
+          success: boolean;
+          reward_gems: number;
+          new_streak: number;
+          message: string;
         };
       };
     };

@@ -9,6 +9,8 @@ export interface UserProfile {
   role: UserRole;
   xp: number;
   level: number;
+  gems?: number;
+  streakDays?: number;
   createdAt: string;
   updatedAt: string;
 }
