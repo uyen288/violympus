@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Swords, UserPlus, MailCheck, ArrowLeft, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { Swords, UserPlus, MailCheck, ArrowLeft, RotateCcw } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { mapSupabaseAuthError } from '@/lib/errors/AppError';
 import { Button } from '@/components/ui/button';
@@ -32,13 +32,10 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Multi-step: 'form' -> 'otp'
-  const [step, setStep] = React.useState<'form' | 'otp'>('form');
+  // Confirmation email sent state
+  const [isSubmitted, setIsSubmitted] = React.useState<boolean>(false);
   const [registeredEmail, setRegisteredEmail] = React.useState<string>('');
-  const [otpCode, setOtpCode] = React.useState<string>('');
   const [authError, setAuthError] = React.useState<string | null>(null);
-  const [otpError, setOtpError] = React.useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = React.useState<boolean>(false);
   const [isResending, setIsResending] = React.useState<boolean>(false);
   const [resendCooldown, setResendCooldown] = React.useState<number>(0);
 
@@ -52,9 +49,9 @@ export function RegisterPage() {
 
   const redirectParam = searchParams.get('redirect');
   const redirectTarget = redirectParam ? decodeURIComponent(redirectParam) : '/dashboard';
-  const googleRedirectUrl = `${window.location.origin}${redirectTarget.startsWith('/') ? redirectTarget : `/${redirectTarget}`}`;
+  const confirmationRedirectUrl = `${window.location.origin}${redirectTarget.startsWith('/') ? redirectTarget : `/${redirectTarget}`}`;
 
-  // Countdown timer for resend OTP
+  // Countdown timer for resend email
   React.useEffect(() => {
     if (resendCooldown <= 0) return;
     const timer = setInterval(() => {
@@ -70,6 +67,7 @@ export function RegisterPage() {
         email: data.email.trim(),
         password: data.password,
         options: {
+          emailRedirectTo: confirmationRedirectUrl,
           data: {
             full_name: data.displayName.trim(),
             role: 'learner',
@@ -79,84 +77,51 @@ export function RegisterPage() {
 
       if (error) {
         const appErr = mapSupabaseAuthError(error);
-        setAuthError(appErr.messageKey ? t(appErr.messageKey, error.message) : error.message);
+        const translated = appErr.messageKey
+          ? t(appErr.messageKey, { defaultValue: appErr.message })
+          : appErr.message;
+        setAuthError(translated);
         return;
       }
 
-      // If user session exists immediately (e.g., email confirmation turned off on Supabase)
+      // If user session exists immediately (e.g. email confirmation disabled on Supabase)
       if (authData.session) {
         toast.success(t('auth.registerSuccess', 'Đăng ký tài khoản thành công!'));
         navigate(redirectTarget);
         return;
       }
 
-      // Otherwise, transition to OTP entry step
+      // Traditional flow: prompt user to check email and click confirmation link
       setRegisteredEmail(data.email.trim());
-      setStep('otp');
+      setIsSubmitted(true);
       setResendCooldown(60);
-      setOtpError(null);
-      toast.info('Mã xác thực OTP đã được gửi đến email của bạn.');
+      toast.info('Liên kết xác nhận đã được gửi đến email của bạn.');
     } catch (err: unknown) {
       setAuthError(err instanceof Error ? err.message : 'Đã xảy ra lỗi khi tạo tài khoản');
     }
   };
 
-  const onVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otpCode || otpCode.trim().length < 6) {
-      setOtpError('Vui lòng nhập đầy đủ mã OTP 6 chữ số');
-      return;
-    }
-
-    try {
-      setIsVerifying(true);
-      setOtpError(null);
-
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: registeredEmail,
-        token: otpCode.trim(),
-        type: 'signup',
-      });
-
-      if (error) {
-        setOtpError('Mã xác thực không chính xác hoặc đã hết hạn. Vui lòng kiểm tra lại.');
-        return;
-      }
-
-      if (data.session || data.user) {
-        toast.success('Xác thực tài khoản thành công! Chào mừng bạn đến với Violympus.');
-        navigate(redirectTarget);
-      } else {
-        toast.success('Xác thực thành công. Vui lòng đăng nhập để tiếp tục.');
-        navigate('/login');
-      }
-    } catch (err: unknown) {
-      setOtpError(err instanceof Error ? err.message : 'Lỗi xác thực mã OTP. Vui lòng thử lại.');
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
+  const handleResendConfirmation = async () => {
     if (resendCooldown > 0 || isResending) return;
     try {
       setIsResending(true);
-      setOtpError(null);
-
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: registeredEmail,
+        options: {
+          emailRedirectTo: confirmationRedirectUrl,
+        },
       });
 
       if (error) {
-        setOtpError(error.message);
+        toast.error(error.message);
         return;
       }
 
       setResendCooldown(60);
-      toast.success('Đã gửi lại mã xác thực tới email của bạn.');
+      toast.success(t('auth.confirmation_sent', 'Đã gửi lại liên kết xác nhận đến email của bạn.'));
     } catch (err: unknown) {
-      setOtpError(err instanceof Error ? err.message : 'Không thể gửi lại mã xác nhận.');
+      toast.error(err instanceof Error ? err.message : 'Không thể gửi lại email xác nhận.');
     } finally {
       setIsResending(false);
     }
@@ -165,7 +130,7 @@ export function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md shadow-lg border-border">
-        {step === 'form' ? (
+        {!isSubmitted ? (
           <>
             <CardHeader className="text-center pb-6">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-white mb-3 shadow-xs">
@@ -192,7 +157,7 @@ export function RegisterPage() {
               {/* Google OAuth Register */}
               <GoogleAuthButton
                 mode="register"
-                redirectTo={googleRedirectUrl}
+                redirectTo={confirmationRedirectUrl}
                 onError={(msg) => setAuthError(msg)}
               />
 
@@ -266,104 +231,72 @@ export function RegisterPage() {
             </CardFooter>
           </>
         ) : (
-          /* OTP Verification Step */
+          /* Check Email Confirmation Card */
           <>
             <CardHeader className="text-center pb-6">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary mb-3 shadow-xs">
-                <MailCheck className="h-6 w-6" aria-hidden="true" />
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary mb-3 shadow-xs">
+                <MailCheck className="h-7 w-7" aria-hidden="true" />
               </div>
               <CardTitle className="text-2xl font-black tracking-tight">
-                Xác thực tài khoản
+                Kiểm tra email của bạn
               </CardTitle>
-              <CardDescription className="text-xs space-y-1">
-                <span>Mã xác thực (OTP) 6 chữ số đã được gửi tới email:</span>
-                <span className="block font-semibold text-foreground">{registeredEmail}</span>
+              <CardDescription className="text-xs">
+                Chúng tôi đã gửi một liên kết kích hoạt đến địa chỉ:
               </CardDescription>
+              <div className="mt-2">
+                <span className="inline-block rounded-lg bg-surface-muted px-3 py-1 font-mono text-xs font-semibold text-foreground border border-border">
+                  {registeredEmail}
+                </span>
+              </div>
             </CardHeader>
 
-            <form onSubmit={onVerifyOtp}>
-              <CardContent className="space-y-4">
-                {otpError && (
-                  <div
-                    className="rounded-lg bg-danger-soft border border-danger/20 p-3 text-xs font-medium text-danger text-left"
-                    role="alert"
-                  >
-                    {otpError}
-                  </div>
-                )}
+            <CardContent className="space-y-4">
+              <div className="rounded-xl border border-border bg-surface-muted/40 p-4 text-xs text-foreground-muted leading-relaxed space-y-2 text-left">
+                <p>
+                  Vui lòng mở hộp thư đến (hoặc kiểm tra thư mục Spam/Quảng cáo) và nhấp vào liên kết xác nhận tài khoản.
+                </p>
+                <p>
+                  Sau khi nhấp vào liên kết, bạn sẽ được tự động kích hoạt tài khoản và chuyển hướng thẳng tới trang chủ Violympus.
+                </p>
+              </div>
+            </CardContent>
 
-                <div className="rounded-lg bg-surface-muted/50 border border-border p-3 text-xs text-foreground-muted leading-relaxed">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <span>
-                      Vui lòng kiểm tra hộp thư đến (và thư rác/spam). Nhập mã 6 số để kích hoạt tài khoản ngay.
-                    </span>
-                  </div>
-                </div>
+            <CardFooter className="flex flex-col gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2 font-medium"
+                onClick={handleResendConfirmation}
+                disabled={resendCooldown > 0 || isResending}
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>
+                  {resendCooldown > 0
+                    ? `Gửi lại liên kết (${resendCooldown}s)`
+                    : isResending
+                      ? 'Đang gửi...'
+                      : 'Gửi lại email xác nhận'}
+                </span>
+              </Button>
 
-                <div className="space-y-1.5 text-center">
-                  <label htmlFor="otp-input" className="block text-sm font-semibold text-foreground">
-                    Mã xác thực OTP (6 chữ số)
-                  </label>
-                  <input
-                    id="otp-input"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    placeholder="••••••"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full text-center text-2xl font-bold tracking-[0.4em] font-mono h-12 rounded-[var(--radius-md)] border border-border bg-surface px-4 py-2 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                    autoFocus
-                  />
-                </div>
-              </CardContent>
-
-              <CardFooter className="flex flex-col gap-4">
-                <Button
-                  type="submit"
-                  className="w-full gap-2 font-bold"
-                  size="lg"
-                  isLoading={isVerifying}
-                  disabled={otpCode.length < 6 || isVerifying}
+              <div className="flex items-center justify-between w-full pt-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setIsSubmitted(false)}
+                  className="inline-flex items-center gap-1 text-foreground-muted hover:text-foreground font-medium cursor-pointer"
                 >
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Xác nhận & Vào trang chủ</span>
-                </Button>
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>Đổi thông tin đăng ký</span>
+                </button>
 
-                <div className="flex items-center justify-between w-full pt-1 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep('form');
-                      setOtpCode('');
-                      setOtpError(null);
-                    }}
-                    className="inline-flex items-center gap-1 text-foreground-muted hover:text-foreground font-medium cursor-pointer"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                    <span>Đổi thông tin</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={resendCooldown > 0 || isResending}
-                    className="inline-flex items-center gap-1 text-primary hover:underline font-medium disabled:opacity-50 disabled:no-underline cursor-pointer"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    <span>
-                      {resendCooldown > 0
-                        ? `Gửi lại mã (${resendCooldown}s)`
-                        : isResending
-                          ? 'Đang gửi...'
-                          : 'Gửi lại mã'}
-                    </span>
-                  </button>
-                </div>
-              </CardFooter>
-            </form>
+                <Link
+                  to="/login"
+                  className="font-bold text-primary hover:underline"
+                >
+                  Đến trang đăng nhập
+                </Link>
+              </div>
+            </CardFooter>
           </>
         )}
       </Card>

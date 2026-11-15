@@ -25,15 +25,20 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [authError, setAuthError] = React.useState<string | null>(null);
+  const [isResendingConfirm, setIsResendingConfirm] = React.useState<boolean>(false);
 
   const oauthError = searchParams.get('error_description')
     ? decodeURIComponent(searchParams.get('error_description') || '')
     : null;
   const currentError = authError || oauthError;
+  const isEmailUnconfirmed = Boolean(
+    currentError?.includes('chưa được xác nhận') || currentError?.includes('not confirmed'),
+  );
 
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -53,7 +58,10 @@ export function LoginPage() {
 
       if (error) {
         const appErr = mapSupabaseAuthError(error);
-        setAuthError(appErr.messageKey ? t(appErr.messageKey, error.message) : error.message);
+        const translated = appErr.messageKey
+          ? t(appErr.messageKey, { defaultValue: appErr.message })
+          : appErr.message;
+        setAuthError(translated);
         return;
       }
 
@@ -61,6 +69,34 @@ export function LoginPage() {
       navigate(redirectTarget);
     } catch (err: unknown) {
       setAuthError(err instanceof Error ? err.message : 'Đã xảy ra lỗi khi đăng nhập');
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    const emailVal = getValues('email');
+    if (!emailVal) {
+      toast.error('Vui lòng nhập địa chỉ email vào ô bên dưới trước khi gửi lại.');
+      return;
+    }
+    try {
+      setIsResendingConfirm(true);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: emailVal,
+        options: {
+          emailRedirectTo: googleRedirectUrl,
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success(t('auth.confirmation_sent', 'Đã gửi liên kết xác nhận đến email của bạn.'));
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Không thể gửi lại email xác nhận');
+    } finally {
+      setIsResendingConfirm(false);
     }
   };
 
@@ -82,10 +118,22 @@ export function LoginPage() {
         <CardContent className="space-y-4">
           {currentError && (
             <div
-              className="rounded-lg bg-danger-soft border border-danger/20 p-3 text-xs font-medium text-danger text-left"
+              className="rounded-lg bg-danger-soft border border-danger/20 p-3 text-xs font-medium text-danger text-left space-y-1.5"
               role="alert"
             >
-              {currentError}
+              <div>{currentError}</div>
+              {isEmailUnconfirmed && (
+                <button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={isResendingConfirm}
+                  className="inline-flex items-center gap-1 font-bold underline cursor-pointer hover:opacity-80 text-primary"
+                >
+                  {isResendingConfirm
+                    ? 'Đang gửi email...'
+                    : 'Bấm vào đây để gửi lại email kích hoạt'}
+                </button>
+              )}
             </div>
           )}
 

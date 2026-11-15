@@ -62,27 +62,45 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 export function mapSupabaseAuthError(error: { message?: string; status?: number; code?: string }): AppError {
-  if (error.message?.includes('Invalid login credentials')) {
+  const msg = error.message || '';
+
+  if (msg.includes('Invalid login credentials')) {
     return new AppError({
       code: 'AUTH_REQUIRED',
       messageKey: 'auth.invalidCredentials',
-      message: error.message,
+      message: 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.',
       cause: error,
     });
   }
-  if (error.message?.includes('User already registered')) {
+  if (msg.includes('Email not confirmed')) {
+    return new AppError({
+      code: 'AUTH_REQUIRED',
+      messageKey: 'auth.emailNotConfirmed',
+      message: 'Email của bạn chưa được xác nhận. Vui lòng kiểm tra hộp thư và nhấp vào liên kết xác nhận tài khoản.',
+      cause: error,
+    });
+  }
+  if (msg.includes('User already registered')) {
     return new AppError({
       code: 'VALIDATION',
       messageKey: 'auth.userAlreadyExists',
-      message: error.message,
+      message: 'Địa chỉ email này đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.',
       cause: error,
     });
   }
+  if (msg.includes('Password should be at least')) {
+    return new AppError({
+      code: 'VALIDATION',
+      messageKey: 'auth.passwordTooShort',
+      message: 'Mật khẩu phải có ít nhất 6 ký tự.',
+      cause: error,
+    });
+  }
+
   return new AppError({
     code: 'UNKNOWN',
     messageKey: 'errors.unknown',
-    message: error.message,
+    message: msg || 'Đã có lỗi xảy ra trong quá trình xác thực.',
     cause: error,
   });
 }
-

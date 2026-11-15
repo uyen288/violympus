@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+const DEFAULT_SUPABASE_URL = 'https://qflelakcnvljznbdkpoh.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_-3aQI7U09ulABGJ5Vbjo8Q_gVWuum3T';
+
 const envSchema = z.object({
   VITE_SUPABASE_URL: z
     .string()
@@ -15,9 +18,16 @@ const envSchema = z.object({
 
 function validateEnv() {
   const raw = {
-    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
-    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
-    VITE_APP_URL: import.meta.env.VITE_APP_URL,
+    VITE_SUPABASE_URL:
+      import.meta.env.VITE_SUPABASE_URL ||
+      DEFAULT_SUPABASE_URL,
+    VITE_SUPABASE_ANON_KEY:
+      import.meta.env.VITE_SUPABASE_ANON_KEY ||
+      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+      DEFAULT_SUPABASE_ANON_KEY,
+    VITE_APP_URL:
+      import.meta.env.VITE_APP_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'),
   };
 
   const result = envSchema.safeParse(raw);
@@ -28,9 +38,17 @@ function validateEnv() {
       .map(([key, msgs]) => `  ${key}: ${msgs?.join(', ')}`)
       .join('\n');
 
-    throw new Error(
-      `❌ Missing or invalid environment variables:\n${message}\n\nCheck .env.local against .env.example`,
+    // Never crash the entire application; return default config with a clear console warning
+    console.warn(
+      `⚠️ Missing or invalid environment variables:\n${message}\nUsing default configuration.`,
     );
+
+    return {
+      VITE_SUPABASE_URL: DEFAULT_SUPABASE_URL,
+      VITE_SUPABASE_ANON_KEY: DEFAULT_SUPABASE_ANON_KEY,
+      VITE_APP_URL:
+        typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
+    };
   }
 
   return result.data;
