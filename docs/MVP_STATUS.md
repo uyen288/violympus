@@ -93,6 +93,21 @@ Last updated: 2026-10-15
 - Match countdown, live player list, and speed-bonus scoring
 - End-of-match ELO updates and podium leaderboard
 
+- **Phase 7: Real Users Only & Rich Question Bank Migrations**
+  - **100% Người dùng thật (No Bots / No Mock Data):**
+    - *Bảng xếp hạng (`/leaderboard`):* Loại bỏ hoàn toàn mock data, truy vấn người dùng thật trực tiếp từ bảng `public.profiles` (loại trừ tài khoản bị ban `is_banned = true`), 3 tab xếp hạng (Top XP, Chuỗi ngày học Streak, Kỷ lục Leo Núi Olympia).
+    - *Leo Núi (`/climb`):* Chế độ thử thách cá nhân theo format Olympia, ghi nhận và đồng bộ kỷ lục điểm cao nhất trực tiếp vào `public.profiles.climb_high_score`.
+    - *Đấu Trường Trực Tiếp (`/arena/room/:code`):* Kết nối người dùng thật theo thời gian thực bằng Supabase Realtime Channel Presence & Broadcast (`arena_room_${code}`). Tự động cập nhật danh sách đấu thủ khi có người vào/ra phòng, đồng bộ lệnh bắt đầu trận đấu và bảng điểm trực tiếp giữa các trình duyệt/thiết bị thật. Không còn bot ảo (`Hoàng Long`, `Kim Ngân`) hay điểm số ngẫu nhiên mô phỏng.
+  - **Mở rộng Ngân hàng Câu hỏi & Bộ đề thi qua Supabase Migrations:**
+    - Migration `015_user_ban.sql`: Quản lý tài khoản, thêm cờ `is_banned`, `banned_at`, `ban_reason`, RPCs `admin_ban_user`, `admin_create_user`, `admin_update_user`, `admin_delete_user`.
+    - Migration `016_rich_questions_seed.sql`: Bổ sung chuyên đề Tin học & Logic, thêm 27 câu hỏi học thuật chuẩn hóa chuyên sâu (Q14 đến Q40) trải rộng cả 11 môn học, kèm options, giải thích, đáp án bảo mật server `question_answers`, và 3 bộ đề thi chuẩn mới (`exam_questions`).
+    - Đồng bộ toàn vẹn vào `supabase/seed.sql` (1.015 dòng) đảm bảo tính tái lập 100%.
+  - **Verification:**
+    - `npm run typecheck`: 0 lỗi.
+    - `npm run lint`: 0 lỗi, 0 cảnh báo.
+    - `npm test`: 11/11 test files, 62/62 unit tests passed.
+    - `npm run build`: Production bundle built cleanly (5.45s).
+
 ## ⏳ Deferred (Not in MVP)
 
 | Feature | Reason |
