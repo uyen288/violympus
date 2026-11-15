@@ -997,6 +997,10 @@ export interface Database {
           user_id: string;
         };
       };
+      ensure_profile: {
+        Args: Record<string, never>;
+        Returns: Database['public']['Tables']['profiles']['Row'];
+      };
     };
   };
 }

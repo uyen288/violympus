@@ -13,11 +13,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = React.useCallback(async (user: User) => {
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
+
+      // If profile record is missing (HTTP 406 / PGRST116), self-heal via ensure_profile RPC
+      if (error || !data) {
+        const { data: ensuredProfile, error: rpcError } = await supabase.rpc('ensure_profile');
+        if (!rpcError && ensuredProfile) {
+          data = ensuredProfile;
+          error = null;
+        } else {
+          // Fallback direct insert if RPC is not yet applied
+          const newUsername =
+            user.user_metadata?.username ||
+            user.email?.split('@')[0] ||
+            `user_${user.id.slice(0, 6)}`;
+          const newDisplayName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.user_metadata?.display_name ||
+            user.email?.split('@')[0] ||
+            'Người học';
+
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email ?? `${user.id}@violympus.local`,
+            username: newUsername,
+            display_name: newDisplayName,
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+            role: 'learner',
+            xp: 0,
+            level: 1,
+            gems: 50,
+            streak_days: 1,
+            climb_high_score: 0,
+            is_public: true,
+          });
+
+          const refetch = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (!refetch.error && refetch.data) {
+            data = refetch.data;
+            error = null;
+          }
+        }
+      }
 
       if (!error && data) {
         if (data.is_banned) {
@@ -31,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setProfile({
           id: data.id,
-          email: user.email ?? '',
+          email: user.email ?? data.email ?? '',
           username: data.username || user.email?.split('@')[0] || 'User',
           displayName:
             data.display_name ||
